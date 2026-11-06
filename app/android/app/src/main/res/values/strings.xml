@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CropWise</string>
+    <string name="title_activity_main">CropWise</string>
+    <string name="package_name">in.rvitm.cropwise</string>
+    <string name="custom_url_scheme">in.rvitm.cropwise</string>
+</resources>

@@ -1,0 +1,16 @@
+{
+  "_comment": "keep: never translated (product names, abbreviations, numbers on labels). preferred: English phrase → the word farmers actually use, per language. Add local disease names here after checking with KVK staff.",
+  "keep": [
+    "CropWise", "Mancozeb", "Metalaxyl", "Chlorothalonil", "Trichoderma viride", "Trichoderma", "Pseudomonas fluorescens", "Pseudomonas",
+    "Beauveria bassiana", "Beauveria", "Bacillus subtilis", "Azadirachtin", "Azospirillum", "Azotobacter", "NSKE", "PSB", "KMB",
+    "CIB&RC", "PHI", "IPM", "KVK", "PGS-India", "FPO", "DAP", "MOP", "WP", "EC", "SC", "pH", "N", "P", "K", "OC",
+    "kg/ha", "dS/m", "WhatsApp", "SMS", "PDF", "JPG", "PNG", "WebP", "MB", "1800-180-1551", "108", "VTU", "RVITM", "USN"
+  ],
+  "preferred": {
+    "early blight": { "kn": "ಎಲೆ ಚುಕ್ಕೆ ರೋಗ", "hi": "अगेती झुलसा", "ta": "இலைக்கருகல் நோய்", "te": "ఆకుమచ్చ తెగులు", "mr": "लवकर करपा" },
+    "late blight": { "kn": "ಅಂಗಮಾರಿ ರೋಗ", "hi": "पछेती झुलसा", "ta": "பின்பருவ இலைக்கருகல்", "te": "ఆలస్య ఆకుమాడు తెగులు", "mr": "उशिरा करपा" },
+    "Jeevamrut": { "kn": "ಜೀವಾಮೃತ", "hi": "जीवामृत", "ta": "ஜீவாமிர்தம்", "te": "జీవామృతం", "mr": "जीवामृत" },
+    "vermicompost": { "kn": "ಎರೆಹುಳು ಗೊಬ್ಬರ", "hi": "केंचुआ खाद", "ta": "மண்புழு உரம்", "te": "వానపాముల ఎరువు", "mr": "गांडूळ खत" },
+    "farmyard manure": { "kn": "ಕೊಟ್ಟಿಗೆ ಗೊಬ್ಬರ", "hi": "गोबर खाद", "ta": "தொழு உரம்", "te": "పశువుల ఎరువు", "mr": "शेणखत" }
+  }
+}

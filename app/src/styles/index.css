@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Design tokens (RGB triplets so Tailwind can apply alpha) ---------- */
+:root {
+  --c-bg: 246 242 233;
+  --c-surface: 255 253 248;
+  --c-surface-2: 239 233 220;
+  --c-ink: 29 38 31;
+  --c-ink-muted: 86 96 90;
+  --c-line: 221 213 196;
+  --c-forest: 31 77 51;
+  --c-forest-deep: 20 48 31;
+  --c-on-forest: 255 253 248;
+  --c-clay: 168 84 31;
+  --c-ochre: 201 139 28;
+  --c-chem: 53 80 107;
+  --c-chem-soft: 231 237 244;
+  --c-organic: 74 110 36;
+  --c-organic-soft: 236 242 224;
+  --c-deficient: 154 84 16;
+  --c-sufficient: 39 112 64;
+  --c-excess: 179 38 30;
+  --c-info: 21 94 176;
+  --c-warn: 154 84 16;
+  --c-danger: 179 38 30;
+  --c-success: 39 112 64;
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: 15 22 18;
+  --c-surface: 23 33 27;
+  --c-surface-2: 31 43 36;
+  --c-ink: 236 231 219;
+  --c-ink-muted: 172 180 172;
+  --c-line: 50 64 55;
+  --c-forest: 127 199 154;
+  --c-forest-deep: 9 21 14;
+  --c-on-forest: 9 21 14;
+  --c-clay: 230 160 106;
+  --c-ochre: 226 176 74;
+  --c-chem: 150 184 219;
+  --c-chem-soft: 29 41 55;
+  --c-organic: 170 208 122;
+  --c-organic-soft: 32 44 26;
+  --c-deficient: 240 172 88;
+  --c-sufficient: 112 200 142;
+  --c-excess: 242 134 122;
+  --c-info: 120 174 236;
+  --c-warn: 240 172 88;
+  --c-danger: 242 134 122;
+  --c-success: 112 200 142;
+  color-scheme: dark;
+}
+
+/* ---------- User text size (A- / A+) ---------- */
+html { font-size: 16px; }
+html[data-text-size='sm'] { font-size: 14.5px; }
+html[data-text-size='lg'] { font-size: 18px; }
+html[data-text-size='xl'] { font-size: 20px; }
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    line-height: 1.6;
+    font-feature-settings: 'kern';
+  }
+  html:not([lang='en']) body {
+    line-height: 1.75;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-ink;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  html:not([lang='en']) h1, html:not([lang='en']) h2, html:not([lang='en']) h3 {
+    @apply font-sans font-bold;
+    letter-spacing: 0;
+    line-height: 1.4;
+  }
+  :focus-visible {
+    outline: 3px solid rgb(var(--c-forest));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: rgb(var(--c-ochre) / 0.35);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .paper-grain {
+    background-image:
+      radial-gradient(rgb(var(--c-ink) / 0.035) 1px, transparent 1px),
+      radial-gradient(rgb(var(--c-ink) / 0.025) 1px, transparent 1px);
+    background-size: 22px 22px, 13px 13px;
+    background-position: 0 0, 7px 11px;
+  }
+  .field-lines {
+    background-image: repeating-linear-gradient(
+      -12deg,
+      rgb(var(--c-on-forest) / 0.06) 0 2px,
+      transparent 2px 26px
+    );
+  }
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-surface-2;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Print (advisory "Download PDF" fallback) ---------- */
+.print-only { display: none; }
+@media print {
+  :root, .dark {
+    --c-bg: 255 255 255;
+    --c-surface: 255 255 255;
+    --c-surface-2: 245 245 245;
+    --c-ink: 0 0 0;
+    --c-ink-muted: 60 60 60;
+    --c-line: 200 200 200;
+  }
+  @page { margin: 14mm; }
+  body { background: white !important; font-size: 11pt; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .print-avoid-break { break-inside: avoid; }
+  .print-grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+  main { padding: 0 !important; margin: 0 !important; }
+  .shadow-card, .shadow-pop { box-shadow: none !important; }
+  a[href]::after { content: ''; }
+}
