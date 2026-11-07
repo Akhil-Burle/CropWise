@@ -25,8 +25,9 @@ python ml/run_cnn.py
 
 Use Python 3.11 or newer. The initial setup needs an internet connection, about **8.5 GB of
 downloads**, and roughly **35–40 GB of free disk space**. Later runs reuse the downloaded and
-prepared data. PyTorch uses CUDA when available; otherwise training runs on CPU and may take much
-longer. See the [CNN training guide](ml/src/models/cnn/README.md) for GPU setup and options. No
+prepared data. PyTorch uses CUDA or Intel XPU when installed and available; otherwise training runs
+on CPU and may take much longer. See the [CNN training guide](ml/src/models/cnn/README.md) for GPU setup
+and options. No
 model has been trained yet, so there are no measured results or checkpoints in the repository.
 
 React 18 + Vite (JSX components, TypeScript services/types), Tailwind, React Router, Recharts (expert

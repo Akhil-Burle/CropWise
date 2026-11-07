@@ -19,9 +19,22 @@ The first setup downloads about **8.5 GB** and needs roughly **35–40 GB of fre
 archives, extracted images and processing files. It may take a while; the download and fingerprint
 steps can resume/reuse their existing files if interrupted. Subsequent runs reuse the prepared
 release. For faster training, use a machine with a supported GPU. PyTorch and torchvision are
-installed with pip defaults. For a specific CUDA/ROCm build, choose the wheel index from the official
-[PyTorch installer](https://pytorch.org/get-started/locally/) and pass it to the runner, for example
-`python ml/run_cnn.py --torch-index-url <selected-wheel-index>`.
+installed with pip defaults. For a specific CUDA, ROCm or Intel XPU build, choose the wheel index
+from the official [PyTorch installer](https://pytorch.org/get-started/locally/) and pass it to the
+runner with `--torch-index-url`.
+
+For an Intel Arc GPU, first install a supported Intel graphics driver and check that the OS/GPU pair
+is listed in the [PyTorch Intel GPU guide](https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html).
+Then run:
+
+```bash
+python ml/run_cnn.py --torch-index-url https://download.pytorch.org/whl/xpu
+```
+
+The runner installs the XPU wheels and `--device auto` selects Intel XPU when available. Initial
+XPU training uses FP32 for compatibility; CUDA alone uses mixed precision currently. To select XPU
+explicitly after setup, pass it through the one-command runner:
+`python ml/run_cnn.py -- --device xpu`.
 
 Use `python ml/run_cnn.py -- --epochs 3 --batch-size 8` to pass training options through. To train
 without repeating environment or dataset setup, use `--skip-install --skip-data-setup` with an
@@ -68,7 +81,7 @@ python ml/src/models/cnn/train.py --dataset-dir ml/data/training/d053c9012200c85
 ## Install and train
 
 Use Python 3.11 or newer. Install PyTorch and torchvision from the official PyTorch selector for the
-machine's OS and CPU/CUDA/ROCm hardware, then install the remaining dependencies:
+machine's OS and CPU/CUDA/ROCm/XPU hardware, then install the remaining dependencies:
 
 ```bash
 python -m venv ml/.venv
@@ -79,10 +92,10 @@ python -m pip install -r ml/requirements-train.txt
 python ml/src/models/cnn/train.py --dataset-dir ml/data/processed/releases/d053c9012200c857
 ```
 
-The default run uses batch size 16, 20 maximum epochs, AdamW, early stopping, and CUDA when
-available. Override settings such as `--batch-size`, `--epochs`, `--num-workers`, `--device cpu`,
-`--seed`, or `--no-pretrained` as needed. A small CPU-only machine will train slowly; use a GPU
-runtime for practical training time.
+The default run uses batch size 16, 20 maximum epochs, AdamW, early stopping, and selects CUDA, then
+XPU, then CPU when available. Override settings such as `--batch-size`, `--epochs`, `--num-workers`,
+`--device cpu`, `--device xpu`, `--seed`, or `--no-pretrained` as needed. A small CPU-only machine
+will train slowly; use a supported GPU for practical training time.
 
 The selected checkpoint, run metadata, epoch history, per-class metrics, and image-level test
 predictions go under `ml/checkpoints/cnn/d053c9012200c857/`. The checkpoint directory is ignored by

@@ -32,11 +32,11 @@ def install_environment(torch_index_url: str | None = None) -> Path:
     has_torch = subprocess.run(
         [str(python), "-c", "import torch, torchvision"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     ).returncode == 0
-    if not has_torch:
+    if not has_torch or torch_index_url:
         print("Installing PyTorch and torchvision", flush=True)
         install_torch = [python, "-m", "pip", "install", "torch", "torchvision"]
         if torch_index_url:
-            install_torch.extend(["--index-url", torch_index_url])
+            install_torch.extend(["--index-url", torch_index_url, "--force-reinstall"])
         command(install_torch)
     command([python, "-m", "pip", "install", "-r", ML / "requirements-train.txt"])
     return python
@@ -90,7 +90,7 @@ def main():
     parser.add_argument("--dataset-url", help="Download a complete dataset archive from this URL")
     parser.add_argument("--part-url-template", help="Download split archive assets; URL must contain {part}")
     parser.add_argument("--part-count", type=int, default=3)
-    parser.add_argument("--torch-index-url", help="Optional PyTorch wheel index from the official installer for a specific CUDA/ROCm build")
+    parser.add_argument("--torch-index-url", help="Optional PyTorch wheel index from the official installer (CUDA/ROCm/XPU)")
     args, training_args = parser.parse_known_args()
     if sys.version_info < (3, 11):
         raise SystemExit("Python 3.11 or newer is required for the pinned ML dependencies.")

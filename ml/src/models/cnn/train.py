@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from contextlib import nullcontext
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -61,7 +62,7 @@ def parse_args():
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda", "xpu"], default="auto")
     parser.add_argument("--no-pretrained", action="store_true", help="Do not download ImageNet weights")
     parser.add_argument("--force-extract", action="store_true", help="Replace the extracted release directory")
     args = parser.parse_args()
@@ -242,7 +243,6 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None, scaler=None):
     model.train(training)
     total_loss = 0.0
     y_true, y_pred = [], []
-    amp_enabled = device.type == "cuda"
     context = torch.enable_grad if training else torch.inference_mode
     with context():
         for step, (images, labels) in enumerate(loader, start=1):
@@ -250,13 +250,19 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None, scaler=None):
             labels = labels.to(device, non_blocking=True)
             if training:
                 optimizer.zero_grad(set_to_none=True)
-            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=amp_enabled):
+            amp_context = (torch.autocast(device_type="cuda", dtype=torch.float16)
+                           if device.type == "cuda" else nullcontext())
+            with amp_context:
                 logits = model(images)
                 loss = loss_fn(logits, labels)
             if training:
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                if scaler is not None:
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss.backward()
+                    optimizer.step()
             total_loss += loss.item() * labels.size(0)
             y_true.extend(labels.detach().cpu().tolist())
             y_pred.extend(logits.argmax(1).detach().cpu().tolist())
@@ -281,10 +287,16 @@ def main():
     args = parse_args()
     if args.output_dir is None:
         args.output_dir = ML / "checkpoints" / "cnn" / args.release
-    device = torch.device("cuda" if args.device == "auto" and torch.cuda.is_available() else
-                          "cpu" if args.device == "auto" else args.device)
+    if args.device == "auto":
+        selected_device = ("cuda" if torch.cuda.is_available() else
+                           "xpu" if hasattr(torch, "xpu") and torch.xpu.is_available() else "cpu")
+    else:
+        selected_device = args.device
+    device = torch.device(selected_device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise SystemExit("CUDA was requested but PyTorch cannot access a CUDA device")
+    if device.type == "xpu" and (not hasattr(torch, "xpu") or not torch.xpu.is_available()):
+        raise SystemExit("XPU was requested but PyTorch cannot access an Intel GPU; install the XPU build and driver")
     seed_everything(args.seed)
     data_dir = args.dataset_dir.resolve() if args.dataset_dir else None
     if data_dir is not None:
@@ -316,7 +328,8 @@ def main():
     model = model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=2)
-    scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
+    # Keep Intel Arc on FP32 initially; GradScaler has hardware limitations on some Arc GPUs.
+    scaler = torch.amp.GradScaler("cuda") if device.type == "cuda" else None
     loss_fn = nn.CrossEntropyLoss()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     history, best_f1, stale_epochs = [], -1.0, 0
@@ -394,6 +407,8 @@ def seed_everything(seed: int):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    if hasattr(torch, "xpu") and torch.xpu.is_available():
+        torch.xpu.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
