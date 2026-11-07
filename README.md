@@ -7,13 +7,28 @@ See the [project synopsis](docs/SYNOPSIS.md) and [ML experiment plan](ml/README.
 The initial EfficientNet-B0 CNN training script is implemented; training and measured model results are pending.
 For the expanded crop scope, see the [fruit and vegetable dataset plan](docs/FRUIT_VEGETABLE_DATASETS.md)
 and [source catalog](ml/data/dataset_catalog.csv), which distinguishes candidates from admitted data.
-The selected sources have now been downloaded and curated into shared CNN/ViT training partitions.
-See the [dataset preparation report](docs/DATASET_PREPARATION_REPORT.md) for the frozen release,
-actual counts, exclusions, validation and portable training bundle. From a clean clone, run
-`python ml/run_cnn.py` to install dependencies, download and prepare the pinned data, then start CNN
-training. See the
-[CNN training guide](ml/src/models/cnn/README.md) for the data bootstrap and training command. Model
-training remains pending.
+The selected sources have been curated into shared CNN/ViT training partitions. The dataset images
+and prepared archive are **not stored in this GitHub repository**. See the
+[dataset preparation report](docs/DATASET_PREPARATION_REPORT.md) for the release contents, counts,
+exclusions and validation.
+
+## Train the CNN from a fresh clone
+
+The first run downloads the pinned public dataset archives from Mendeley Data and Hugging Face,
+verifies them, prepares the training splits, installs dependencies and starts EfficientNet-B0:
+
+```bash
+git clone https://github.com/Akhil-Burle/CropWise.git
+cd CropWise
+python ml/run_cnn.py
+```
+
+Use Python 3.11 or newer. The initial setup needs an internet connection, about **8.5 GB of
+downloads**, and roughly **35–40 GB of free disk space**. Later runs reuse the downloaded and
+prepared data. PyTorch uses CUDA when available; otherwise training runs on CPU and may take much
+longer. See the [CNN training guide](ml/src/models/cnn/README.md) for GPU setup and options. No
+model has been trained yet, so there are no measured results or checkpoints in the repository.
+
 React 18 + Vite (JSX components, TypeScript services/types), Tailwind, React Router, Recharts (expert
 screens only), Zustand, Zod, react-i18next, Capacitor for Android. No animation library. Runs fully
 offline on mock data.
