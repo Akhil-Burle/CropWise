@@ -18,8 +18,11 @@ Use commands from `ml/data/README.md`. Both models must consume the same release
 Perceptual/capture grouping is a heuristic, not proof that every physical leaf has been identified.
 
 After CNN training, run `python ml/src/data/review_dataset.py` from the repository root. It writes
-`class_review.csv` and `misclassified_validation.csv` beside the saved checkpoint. The default flags
-highlight low training counts, small validation support and low validation F1. Use these reports to
-inspect the images and labels manually. Model mistakes are review candidates, not proof that a label
-is wrong; the script does not remove or edit images. It uses validation predictions and leaves the
-test split out of the review/tuning loop.
+`class_review.csv`, `misclassified_validation.csv` (all validation errors),
+`weak_class_misclassified_validation.csv` (the flagged-class subset),
+`validation_confusions.csv`, and `validation_error_summary.json` beside the saved checkpoint. The
+summary separates same-crop from cross-crop errors and counts disease/symptom predictions labeled
+healthy. The default flags highlight low training counts, small validation support and low validation
+F1. Use these reports to inspect images and labels manually. Model mistakes are review candidates,
+not proof that a label is wrong; the script does not remove or edit images. It uses validation
+predictions and leaves the test split out of the review/tuning loop.

@@ -111,7 +111,10 @@ python ml/src/data/review_dataset.py
 ```
 
 This evaluates the saved best checkpoint on validation data and writes `class_review.csv` and
-`misclassified_validation.csv` beside the checkpoint. It never deletes or relabels images.
+`misclassified_validation.csv` (all validation errors), `weak_class_misclassified_validation.csv`,
+`validation_confusions.csv`, and `validation_error_summary.json` beside the checkpoint. The summary
+reports same-crop/cross-crop errors and disease/symptom-to-healthy errors. It never deletes or
+relabels images.
 
 Before publishing dataset shards in a GitHub Release, review the source-specific license and
 attribution requirements recorded in the dataset report and bundle metadata. The combined bundle

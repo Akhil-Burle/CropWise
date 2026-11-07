@@ -117,36 +117,94 @@ def main():
                 "decision": "", "review_notes": "",
             })
 
-    manifest_rows = {row["image_id"]: row for row in csv.DictReader((release_dir / "validation.csv").open())}
+    with (release_dir / "manifest.csv").open(newline="") as stream:
+        label_conditions = {row["label"]: row["condition_type"] for row in csv.DictReader(stream)}
+    with (release_dir / "validation.csv").open(newline="") as stream:
+        manifest_rows = {row["image_id"]: row for row in csv.DictReader(stream)}
+    predictions = list(csv.DictReader((output_dir / "validation_predictions.csv").open(newline="")))
+    if len(predictions) != len(manifest_rows):
+        raise SystemExit("Validation predictions do not match validation manifest row count")
+
+    errors = []
+    for prediction in predictions:
+        if prediction["correct"] == "True":
+            continue
+        row = manifest_rows[prediction["image_id"]]
+        predicted_crop = prediction["predicted_class"].split("__", 1)[0]
+        predicted_condition = label_conditions.get(prediction["predicted_class"], "unknown")
+        flags = []
+        if int(counts[row["label"]]["train"]) < args.min_train_images:
+            flags.append("low_training_count")
+        if int(counts[row["label"]]["validation"]) < args.min_validation_images:
+            flags.append("low_validation_support")
+        if float(class_metrics[row["label"]]["f1"]) < args.min_validation_f1:
+            flags.append("low_validation_f1")
+        errors.append({
+            "image_id": row["image_id"], "relative_path": row["relative_path"],
+            "label": row["label"], "predicted_class": prediction["predicted_class"],
+            "crop_id": row["crop_id"], "predicted_crop": predicted_crop,
+            "same_crop": str(row["crop_id"] == predicted_crop),
+            "condition_type": row["condition_type"], "predicted_condition_type": predicted_condition,
+            "disease_predicted_healthy": str(row["condition_type"] != "healthy" and predicted_condition == "healthy"),
+            "dataset_id": row["dataset_id"], "source_label": row["source_label"],
+            "license": row["license"], "annotation_status": row["annotation_status"],
+            "review_flags": ";".join(flags), "decision": "", "review_notes": "",
+        })
+
     image_fields = ["image_id", "relative_path", "label", "predicted_class", "crop_id",
-                    "condition_type", "dataset_id", "source_label", "license",
+                    "predicted_crop", "same_crop", "condition_type", "predicted_condition_type",
+                    "disease_predicted_healthy", "dataset_id", "source_label", "license",
                     "annotation_status", "review_flags", "decision", "review_notes"]
-    flagged_errors = 0
-    with (output_dir / "misclassified_validation.csv").open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=image_fields)
-        writer.writeheader()
-        for prediction in csv.DictReader((output_dir / "validation_predictions.csv").open()):
-            if prediction["correct"] == "True" or prediction["true_class"] not in review_labels:
-                continue
-            row = manifest_rows[prediction["image_id"]]
-            flags = []
-            if int(counts[row["label"]]["train"]) < args.min_train_images:
-                flags.append("low_training_count")
-            if int(counts[row["label"]]["validation"]) < args.min_validation_images:
-                flags.append("low_validation_support")
-            if float(class_metrics[row["label"]]["f1"]) < args.min_validation_f1:
-                flags.append("low_validation_f1")
-            writer.writerow({key: row.get(key, "") for key in
-                             ["image_id", "relative_path", "label", "crop_id", "condition_type",
-                              "dataset_id", "source_label", "license", "annotation_status"]}
-                            | {"predicted_class": prediction["predicted_class"],
-                               "review_flags": ";".join(flags), "decision": "", "review_notes": ""})
-            flagged_errors += 1
+    write_review_rows(output_dir / "misclassified_validation.csv", errors, image_fields)
+    weak_errors = [row for row in errors if row["label"] in review_labels]
+    write_review_rows(output_dir / "weak_class_misclassified_validation.csv", weak_errors, image_fields)
+
+    confusion_counts = {}
+    for row in errors:
+        key = (row["crop_id"], row["predicted_crop"], row["label"], row["predicted_class"])
+        confusion_counts[key] = confusion_counts.get(key, 0) + 1
+    with (output_dir / "validation_confusions.csv").open("w", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["true_crop", "predicted_crop", "true_class", "predicted_class", "errors"])
+        for key, count in sorted(confusion_counts.items(), key=lambda item: (-item[1], item[0])):
+            writer.writerow([*key, count])
+
+    true_crop_counts = {}
+    for row in errors:
+        true_crop_counts[row["crop_id"]] = true_crop_counts.get(row["crop_id"], 0) + 1
+    same_crop_errors = sum(row["same_crop"] == "True" for row in errors)
+    disease_to_healthy = sum(row["disease_predicted_healthy"] == "True" for row in errors)
+    summary_out = {
+        "release_id": release_id,
+        "checkpoint": str(checkpoint_path),
+        "validation_images": len(predictions),
+        "validation_errors_all_classes": len(errors),
+        "validation_accuracy": metrics["accuracy"],
+        "validation_macro_f1": metrics["macro_f1"],
+        "same_crop_errors": same_crop_errors,
+        "cross_crop_errors": len(errors) - same_crop_errors,
+        "same_crop_share_of_errors": same_crop_errors / len(errors) if errors else 0.0,
+        "disease_or_symptom_predicted_healthy": disease_to_healthy,
+        "errors_with_unspecified_true_label": sum("unspecified" in row["label"] for row in errors),
+        "errors_by_true_crop": dict(sorted(true_crop_counts.items(), key=lambda item: (-item[1], item[0]))),
+        "flagged_weak_classes": sorted(review_labels),
+        "errors_from_flagged_weak_classes": len(weak_errors),
+        "note": "Error counts describe this validation split. No test rows or images were changed.",
+    }
+    (output_dir / "validation_error_summary.json").write_text(json.dumps(summary_out, indent=2) + "\n")
 
     print(f"Validation accuracy={metrics['accuracy']:.4f}; macro-F1={metrics['macro_f1']:.4f}")
-    print(f"Review {len(review_labels)} flagged classes and {flagged_errors} misclassified validation images.")
+    print(f"All validation errors: {len(errors)}; same-crop: {same_crop_errors}; cross-crop: {len(errors) - same_crop_errors}")
+    print(f"Disease/symptom -> healthy errors: {disease_to_healthy}; weak-class subset: {len(weak_errors)}")
     print(f"Reports written under {output_dir}")
     print("No files were deleted or changed. Inspect original images and labels before deciding what to exclude.")
+
+
+def write_review_rows(path: Path, rows: list[dict], fields: list[str]):
+    with path.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 if __name__ == "__main__":
