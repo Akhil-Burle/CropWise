@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "VITE_DATA_SOURCE=local vite",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

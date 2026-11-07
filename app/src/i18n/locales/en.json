@@ -504,6 +504,10 @@
       "no_diagnosis": {
         "title": "No chemical advice without a diagnosis",
         "text": "We only suggest a pesticide when we know the problem. Retake the leaf photo to get one."
+      },
+      "no_protocol": {
+        "title": "No chemical advice for this problem yet",
+        "text": "We don't have a safe spray recommendation for this problem yet. Follow the general organic steps and ask your local Krishi Vigyan Kendra or agriculture officer."
       }
     },
     "product": "Product",

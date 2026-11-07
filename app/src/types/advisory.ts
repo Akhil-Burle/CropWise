@@ -108,7 +108,7 @@ export interface RationaleItem {
   detail: string;
 }
 
-export type ChemicalUnavailableReason = 'healthy' | 'no_diagnosis';
+export type ChemicalUnavailableReason = 'healthy' | 'no_diagnosis' | 'no_protocol';
 
 export interface DualAdvisory extends Localized {
   id: string;

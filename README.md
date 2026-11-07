@@ -50,7 +50,7 @@ cropwise/
     android/      generated Android project
   tools/i18n/   full-sentence translation pipeline + glossary
   contracts/    openapi.json from FastAPI goes here
-  backend/      FastAPI (planned) – see backend/README.md
+  backend/      FastAPI local ML API (uploads + analysis jobs → CNN) – see backend/README.md
   ml/           paired CNN and ViT study + separate soil-card OCR (planned)
     configs/    shared experiment specification
     data/       local datasets and shared split manifests
@@ -65,7 +65,8 @@ cropwise/
 ```bash
 cd app
 npm install
-npm run dev        # website at http://localhost:5173
+npm run dev        # website at http://localhost:5173 (all mock data, fully offline)
+npm run dev:local  # same site, but leaf photo + soil card go to the local ML backend (see below)
 npm run build
 npm test           # vitest --run
 npm run typecheck
@@ -132,7 +133,7 @@ translation; a sentence that loses one is kept in English, so a translation can 
 1. Pick a language → Login → "Continue as Ramesh Gowda · Farmer" for the farmer app, or
    "Dr. Kavya Shetty · Agronomist" for the expert app. OTP demo code: `123456`.
 2. **Run full demo** (top bar) walks the whole pipeline with sample data.
-3. Farmer: Home → Check my crop → choose stage → "Use sample leaf" → Get advice.
+3. Farmer: Home → Check my crop → choose stage → "Use sample leaf" → Get advice. (With `dev:local` there are no sample buttons: upload a real leaf photo.)
 4. Expert: Review queue → Advise farmer → log in as the farmer to see the message on Home.
 5. Settings → Demo tools: reset data, simulate session expiry.
 
@@ -143,11 +144,19 @@ Fraunces (display) + Noto Sans / Noto Sans Devanagari / Noto Sans Kannada (body)
 Chemical = slate, organic = moss, equal weight. Toxicity colours (red/yellow/blue/green) appear only in
 the toxicity band. 48px minimum targets, 3px focus ring, reduced-motion respected, A−/A+ text sizes.
 
+## Running the website against the local ML backend
+
+The leaf photo and soil card can go to the CNN on this machine (nothing is hosted). Start the API with
+`backend/start.sh`, then `cd app && npm run dev:local`. Uploads, analysis and the crop list are real; accounts
+and learning content stay mock, and advice follows the real diagnosis but uses the demo protocols (only 3
+diseases have a spray dose; the rest get general organic guidance). Use real photos: the bundled sample
+buttons are hidden in this mode. See [backend/README.md](backend/README.md).
+
 ## Connecting a real backend
 
 Layering: **component → hook → service interface → adapter**. Components never import `src/mock` or
 call fetch (checked with grep). The adapter is chosen once in `src/services/index.ts` from
-`VITE_DATA_SOURCE` (`mock` | `http`). Base URL: `VITE_API_BASE_URL` (used only in `app/src/services/http`). For FastAPI, export
+`VITE_DATA_SOURCE` (`mock` | `local` | `http`; `local` = real uploads/analysis, mock for the rest, see `src/services/source.local.ts`). Base URL: `VITE_API_BASE_URL` (used only in `app/src/services/http`). For FastAPI, export
 `openapi.json` into `contracts/` and run `npm run api:types` (see `contracts/README.md`).
 
 To connect a backend, implement the methods in `src/services/http/index.ts` (each has a TODO). For each
@@ -160,8 +169,8 @@ Every method must reject with `AppError` (`src/services/errors.ts`).
 | `AuthService` | `OtpChallenge` from requestOtp/register; `Session` from verifyOtp/refresh/loginAsDemo; `User \| null` from getCurrentUser. Token storage (cookie or bearer via `tokenStore`) is private to the adapter. Emit `sessionEvents.emitUnauthorized()` on 401 (done by `http/client.ts`). |
 | `ProfileService` | `Profile`, `DataExport` |
 | `FarmService` | `Paginated<Farm>`, `Farm`, `Crop[]`, `Region[]`, `SeasonTimelineItem[]` |
-| `UploadService` | Built with `createUploadService(transport)` – supply a multipart or pre-signed-URL transport; resolves `UploadRef`, reports progress, supports abort. |
-| `AnalysisService` | `submit → {jobId}`, `getStatus → AnalysisJobStatus` (queued / processing(stage, progress) / completed(parts) / failed(error) / cancelled), `getResult/get/confirmSoil → AnalysisResult` (partial results via `soilError`/`diagnosisError`), `list → Paginated<AnalysisSummary>` |
+| `UploadService` | Built with `createUploadService(transport)` – supply a multipart or pre-signed-URL transport; resolves `UploadRef`, reports progress, supports abort. **Implemented** (multipart to the local API). |
+| `AnalysisService` | `submit → {jobId}`, `getStatus → AnalysisJobStatus` (queued / processing(stage, progress) / completed(parts) / failed(error) / cancelled), `getResult/get/confirmSoil → AnalysisResult` (partial results via `soilError`/`diagnosisError`), `list → Paginated<AnalysisSummary>`. **Implemented** against the local API. |
 | `SoilService` | `Paginated<SoilReport>`, `SoilReport \| null`, `SoilTrend`, `SoilComparison` |
 | `AdvisoryService` | `DualAdvisory` with doses already computed for the requested area; `{saved}`; `AdvisoryReport` (`url` or `unavailable` → print fallback); `ShareMessage` |
 | `TransitionService` | `TransitionPlan` (years, ROI, break-even, yield, SOC, seasons) for a speed; `SeasonTask` |

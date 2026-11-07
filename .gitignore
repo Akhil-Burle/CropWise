@@ -15,3 +15,6 @@ ml/checkpoints/*
 __pycache__/
 *.pyc
 .venv/
+
+# Local API storage (uploads + analysis records)
+backend/storage/

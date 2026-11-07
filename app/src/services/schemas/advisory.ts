@@ -103,7 +103,7 @@ export const DualAdvisorySchema = z.object({
   area: z.number().positive(),
   areaUnit: AreaUnitSchema,
   chemical: ChemicalAdvisorySchema.nullish(),
-  chemicalUnavailableReason: z.enum(['healthy', 'no_diagnosis']).nullish(),
+  chemicalUnavailableReason: z.enum(['healthy', 'no_diagnosis', 'no_protocol']).nullish(),
   organic: OrganicAdvisorySchema,
   cost: z.object({
     currency: z.string(),

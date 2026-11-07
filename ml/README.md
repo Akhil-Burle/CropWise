@@ -10,9 +10,10 @@ image integrity, groups duplicates and exports versioned shared manifests. Local
 status is described in `data/processed/` and the dataset preparation report in `docs/`.
 See [data setup](data/README.md) for curation commands and [CNN training](src/models/cnn/README.md)
 for the one-command clone setup, EfficientNet training, and optional dataset bundle distribution.
-The entry point is `python ml/run_cnn.py`. ViT training, trained weights, OCR and real
-inference remain **not implemented**. The frontend continues to use mock predictions. Empty result
-CSVs mean not measured, not zero.
+The entry point is `python ml/run_cnn.py`. ViT training and OCR remain **not implemented**. A trained
+CNN checkpoint can be served to the website through the local API in `backend/` (see
+[backend/README.md](../backend/README.md)); advice for its diagnoses still comes from demo protocols. Empty
+result CSVs mean not measured, not zero.
 
 ## Structure
 
@@ -65,7 +66,7 @@ Populate `results/` only from real runs. Keep both models' results even if one p
 
 ## Integration and separate tasks
 
-Planned inference: image upload → FastAPI job → configured model → confidence/input checks → diagnosis → reviewed advisory rules. Record which model/checkpoint produced each diagnosis. The current app expects one diagnosis; a dual-model app comparison view requires API/schema/UI changes. An ensemble is outside the initial scope.
+Inference: image upload → FastAPI job → configured model → confidence/input checks → diagnosis → reviewed advisory rules. The first four steps exist today for the CNN (`backend/cropwise_api/`); reviewed advisory rules do not. Each diagnosis records the model and run ID that produced it. A new model plugs in by implementing the `LeafClassifier` protocol (`backend/cropwise_api/ml/base.py`) and registering it in `ml/registry.py`. The current app expects one diagnosis; a dual-model app comparison view requires API/schema/UI changes. An ensemble is outside the initial scope.
 
 Soil Health Card OCR remains separate: extract N, P, K, pH, EC and OC with units, per-field confidence and image-relative bounding boxes for review. Neither disease classifier replaces OCR.
 

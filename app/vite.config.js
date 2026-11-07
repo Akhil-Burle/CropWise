@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
-// Build-time data source: mock (default, offline demo) or http (real backend). See src/services/index.ts.
-const dataSource = process.env.VITE_DATA_SOURCE === 'http' ? 'http' : 'mock';
+// Build-time data source: mock (default, offline demo), local (real ML backend + mock rest) or http. See src/services/index.ts.
+const dataSource = ['http', 'local'].includes(process.env.VITE_DATA_SOURCE) ? process.env.VITE_DATA_SOURCE : 'mock';
 
 export default defineConfig({
   plugins: [
@@ -55,6 +55,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Dev + preview: forward /api to the local ML backend, so the browser sees one origin (no CORS).
+  server: { proxy: { '/api': { target: process.env.CROPWISE_API_URL || 'http://127.0.0.1:8000' } } },
+  preview: { proxy: { '/api': { target: process.env.CROPWISE_API_URL || 'http://127.0.0.1:8000' } } },
   build: {
     target: 'es2019',
     sourcemap: 'hidden',

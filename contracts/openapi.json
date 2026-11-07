@@ -1,0 +1,1920 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "CropWise local API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health",
+                "operationId": "health_api_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthOut"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/uploads": {
+            "post": {
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Create Upload",
+                "operationId": "create_upload_api_uploads_post",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_create_upload_api_uploads_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadRefOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/uploads/{upload_id}/file": {
+            "get": {
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Get Upload File",
+                "operationId": "get_upload_file_api_uploads__upload_id__file_get",
+                "parameters": [
+                    {
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Upload Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis": {
+            "post": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Submit Analysis",
+                "operationId": "submit_analysis_api_analysis_post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AnalysisInputIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobRefOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "List Analyses",
+                "operationId": "list_analyses_api_analysis_get",
+                "parameters": [
+                    {
+                        "name": "lang",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "enum": [
+                                "en",
+                                "hi",
+                                "kn",
+                                "ta",
+                                "te",
+                                "mr",
+                                "bn",
+                                "gu",
+                                "ml",
+                                "pa",
+                                "or"
+                            ],
+                            "type": "string",
+                            "default": "en",
+                            "title": "Lang"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1,
+                            "title": "Page"
+                        }
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Pagesize"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Sort"
+                        }
+                    },
+                    {
+                        "name": "farmId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Farmid"
+                        }
+                    },
+                    {
+                        "name": "cropId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Cropid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Status"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalysisPageOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/jobs/{job_id}": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Job Status",
+                "operationId": "job_status_api_analysis_jobs__job_id__get",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/QueuedOut"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/ProcessingOut"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/CompletedOut"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/FailedOut"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/CancelledOut"
+                                        }
+                                    ],
+                                    "discriminator": {
+                                        "propertyName": "state",
+                                        "mapping": {
+                                            "queued": "#/components/schemas/QueuedOut",
+                                            "processing": "#/components/schemas/ProcessingOut",
+                                            "completed": "#/components/schemas/CompletedOut",
+                                            "failed": "#/components/schemas/FailedOut",
+                                            "cancelled": "#/components/schemas/CancelledOut"
+                                        }
+                                    },
+                                    "title": "Response Job Status Api Analysis Jobs  Job Id  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/jobs/{job_id}/result": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Job Result",
+                "operationId": "job_result_api_analysis_jobs__job_id__result_get",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Job Id"
+                        }
+                    },
+                    {
+                        "name": "lang",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "enum": [
+                                "en",
+                                "hi",
+                                "kn",
+                                "ta",
+                                "te",
+                                "mr",
+                                "bn",
+                                "gu",
+                                "ml",
+                                "pa",
+                                "or"
+                            ],
+                            "type": "string",
+                            "default": "en",
+                            "title": "Lang"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalysisResultOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/jobs/{job_id}/cancel": {
+            "post": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Cancel Job",
+                "operationId": "cancel_job_api_analysis_jobs__job_id__cancel_post",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/jobs/{job_id}/retry": {
+            "post": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Retry Job",
+                "operationId": "retry_job_api_analysis_jobs__job_id__retry_post",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobRefOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/{analysis_id}": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Get Analysis",
+                "operationId": "get_analysis_api_analysis__analysis_id__get",
+                "parameters": [
+                    {
+                        "name": "analysis_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Analysis Id"
+                        }
+                    },
+                    {
+                        "name": "lang",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "enum": [
+                                "en",
+                                "hi",
+                                "kn",
+                                "ta",
+                                "te",
+                                "mr",
+                                "bn",
+                                "gu",
+                                "ml",
+                                "pa",
+                                "or"
+                            ],
+                            "type": "string",
+                            "default": "en",
+                            "title": "Lang"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalysisResultOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Delete Analysis",
+                "operationId": "delete_analysis_api_analysis__analysis_id__delete",
+                "parameters": [
+                    {
+                        "name": "analysis_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Analysis Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/{analysis_id}/soil": {
+            "put": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Confirm Soil",
+                "operationId": "confirm_soil_api_analysis__analysis_id__soil_put",
+                "parameters": [
+                    {
+                        "name": "analysis_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Analysis Id"
+                        }
+                    },
+                    {
+                        "name": "lang",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "enum": [
+                                "en",
+                                "hi",
+                                "kn",
+                                "ta",
+                                "te",
+                                "mr",
+                                "bn",
+                                "gu",
+                                "ml",
+                                "pa",
+                                "or"
+                            ],
+                            "type": "string",
+                            "default": "en",
+                            "title": "Lang"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConfirmSoilIn"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalysisResultOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AlternativeOut": {
+                "properties": {
+                    "diseaseId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Diseaseid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "probability": {
+                        "type": "number",
+                        "maximum": 1.0,
+                        "minimum": 0.0,
+                        "title": "Probability"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "probability"
+                ],
+                "title": "AlternativeOut"
+            },
+            "AnalysisInputIn": {
+                "properties": {
+                    "farmId": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "minLength": 1,
+                        "title": "Farmid"
+                    },
+                    "cropId": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "minLength": 1,
+                        "pattern": "^[a-z0-9_]+$",
+                        "title": "Cropid"
+                    },
+                    "growthStage": {
+                        "type": "string",
+                        "enum": [
+                            "vegetative",
+                            "flowering",
+                            "fruiting"
+                        ],
+                        "title": "Growthstage"
+                    },
+                    "area": {
+                        "type": "number",
+                        "maximum": 500.0,
+                        "exclusiveMinimum": 0.0,
+                        "title": "Area"
+                    },
+                    "areaUnit": {
+                        "type": "string",
+                        "enum": [
+                            "acre",
+                            "hectare"
+                        ],
+                        "title": "Areaunit"
+                    },
+                    "soilUploadId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Soiluploadid"
+                    },
+                    "leafUploadId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Leafuploadid"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "farmId",
+                    "cropId",
+                    "growthStage",
+                    "area",
+                    "areaUnit"
+                ],
+                "title": "AnalysisInputIn"
+            },
+            "AnalysisPageOut": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/AnalysisSummaryOut"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "title": "Pagesize"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "hasMore": {
+                        "type": "boolean",
+                        "title": "Hasmore"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items",
+                    "page",
+                    "pageSize",
+                    "total",
+                    "hasMore"
+                ],
+                "title": "AnalysisPageOut"
+            },
+            "AnalysisResultOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Createdat"
+                    },
+                    "farmId": {
+                        "type": "string",
+                        "title": "Farmid"
+                    },
+                    "farmName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Farmname"
+                    },
+                    "cropId": {
+                        "type": "string",
+                        "title": "Cropid"
+                    },
+                    "cropName": {
+                        "type": "string",
+                        "title": "Cropname"
+                    },
+                    "growthStage": {
+                        "type": "string",
+                        "enum": [
+                            "vegetative",
+                            "flowering",
+                            "fruiting"
+                        ],
+                        "title": "Growthstage"
+                    },
+                    "area": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Area"
+                    },
+                    "areaUnit": {
+                        "type": "string",
+                        "enum": [
+                            "acre",
+                            "hectare"
+                        ],
+                        "title": "Areaunit"
+                    },
+                    "soil": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/SoilReportOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "soilError": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AppErrorOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "diagnosis": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/DiseasePredictionOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "diagnosisError": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AppErrorOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "soilConfirmed": {
+                        "type": "boolean",
+                        "title": "Soilconfirmed",
+                        "default": false
+                    },
+                    "saved": {
+                        "type": "boolean",
+                        "title": "Saved",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "createdAt",
+                    "farmId",
+                    "cropId",
+                    "cropName",
+                    "growthStage",
+                    "area",
+                    "areaUnit"
+                ],
+                "title": "AnalysisResultOut"
+            },
+            "AnalysisSummaryOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Createdat"
+                    },
+                    "farmId": {
+                        "type": "string",
+                        "title": "Farmid"
+                    },
+                    "farmName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Farmname"
+                    },
+                    "cropId": {
+                        "type": "string",
+                        "title": "Cropid"
+                    },
+                    "cropName": {
+                        "type": "string",
+                        "title": "Cropname"
+                    },
+                    "diseaseName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Diseasename"
+                    },
+                    "isHealthy": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ishealthy"
+                    },
+                    "confidence": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Confidence"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "complete",
+                            "partial",
+                            "needs_review"
+                        ],
+                        "title": "Status"
+                    },
+                    "saved": {
+                        "type": "boolean",
+                        "title": "Saved",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "createdAt",
+                    "farmId",
+                    "cropId",
+                    "cropName",
+                    "status"
+                ],
+                "title": "AnalysisSummaryOut"
+            },
+            "AppErrorOut": {
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "title": "Code"
+                    },
+                    "message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Message"
+                    },
+                    "retryable": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Retryable"
+                    },
+                    "fieldErrors": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Fielderrors"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "code"
+                ],
+                "title": "AppErrorOut"
+            },
+            "Body_create_upload_api_uploads_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "title": "File"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "title": "Kind"
+                    },
+                    "file_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File Name"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file",
+                    "kind"
+                ],
+                "title": "Body_create_upload_api_uploads_post"
+            },
+            "CancelledOut": {
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "const": "cancelled",
+                        "title": "State",
+                        "default": "cancelled"
+                    }
+                },
+                "type": "object",
+                "title": "CancelledOut"
+            },
+            "CompletedOut": {
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "const": "completed",
+                        "title": "State",
+                        "default": "completed"
+                    },
+                    "analysisId": {
+                        "type": "string",
+                        "title": "Analysisid"
+                    },
+                    "parts": {
+                        "$ref": "#/components/schemas/PartsOut"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "analysisId",
+                    "parts"
+                ],
+                "title": "CompletedOut"
+            },
+            "ConfirmSoilIn": {
+                "properties": {
+                    "values": {
+                        "items": {
+                            "$ref": "#/components/schemas/SoilValueIn"
+                        },
+                        "type": "array",
+                        "maxItems": 6,
+                        "minItems": 1,
+                        "title": "Values"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "values"
+                ],
+                "title": "ConfirmSoilIn"
+            },
+            "DiseasePredictionOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "cropId": {
+                        "type": "string",
+                        "title": "Cropid"
+                    },
+                    "diseaseId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Diseaseid"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "scientificName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scientificname"
+                    },
+                    "isHealthy": {
+                        "type": "boolean",
+                        "title": "Ishealthy"
+                    },
+                    "confidence": {
+                        "type": "number",
+                        "maximum": 1.0,
+                        "minimum": 0.0,
+                        "title": "Confidence"
+                    },
+                    "confidenceThreshold": {
+                        "type": "number",
+                        "maximum": 1.0,
+                        "minimum": 0.0,
+                        "title": "Confidencethreshold"
+                    },
+                    "lowConfidence": {
+                        "type": "boolean",
+                        "title": "Lowconfidence"
+                    },
+                    "alternatives": {
+                        "items": {
+                            "$ref": "#/components/schemas/AlternativeOut"
+                        },
+                        "type": "array",
+                        "title": "Alternatives",
+                        "default": []
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "default": ""
+                    },
+                    "symptoms": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Symptoms",
+                        "default": []
+                    },
+                    "severity": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "low",
+                                    "moderate",
+                                    "high"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Severity"
+                    },
+                    "affectedAreaPct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Affectedareapct"
+                    },
+                    "leafImageUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Leafimageurl"
+                    },
+                    "contentLang": {
+                        "type": "string",
+                        "enum": [
+                            "en",
+                            "hi",
+                            "kn",
+                            "ta",
+                            "te",
+                            "mr",
+                            "bn",
+                            "gu",
+                            "ml",
+                            "pa",
+                            "or"
+                        ],
+                        "title": "Contentlang",
+                        "default": "en"
+                    },
+                    "modelId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Modelid"
+                    },
+                    "runId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Runid"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "cropId",
+                    "name",
+                    "isHealthy",
+                    "confidence",
+                    "confidenceThreshold",
+                    "lowConfidence"
+                ],
+                "title": "DiseasePredictionOut"
+            },
+            "FailedOut": {
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "const": "failed",
+                        "title": "State",
+                        "default": "failed"
+                    },
+                    "error": {
+                        "$ref": "#/components/schemas/AppErrorOut"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "title": "FailedOut"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "HealthOut": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "degraded"
+                        ],
+                        "title": "Status"
+                    },
+                    "leafModel": {
+                        "type": "string",
+                        "title": "Leafmodel"
+                    },
+                    "modelId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Modelid"
+                    },
+                    "runId": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Runid"
+                    },
+                    "device": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Device"
+                    },
+                    "numClasses": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Numclasses"
+                    },
+                    "soilReader": {
+                        "type": "string",
+                        "title": "Soilreader"
+                    },
+                    "detail": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "status",
+                    "leafModel",
+                    "soilReader"
+                ],
+                "title": "HealthOut"
+            },
+            "JobRefOut": {
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "title": "Jobid"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "jobId"
+                ],
+                "title": "JobRefOut"
+            },
+            "PartsOut": {
+                "properties": {
+                    "soil": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "failed",
+                            "skipped"
+                        ],
+                        "title": "Soil"
+                    },
+                    "leaf": {
+                        "type": "string",
+                        "enum": [
+                            "ok",
+                            "failed",
+                            "skipped"
+                        ],
+                        "title": "Leaf"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "soil",
+                    "leaf"
+                ],
+                "title": "PartsOut"
+            },
+            "ProcessingOut": {
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "const": "processing",
+                        "title": "State",
+                        "default": "processing"
+                    },
+                    "stage": {
+                        "type": "string",
+                        "enum": [
+                            "cleaning",
+                            "reading_soil",
+                            "analysing_leaf",
+                            "matching_protocols"
+                        ],
+                        "title": "Stage"
+                    },
+                    "progress": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Progress"
+                    },
+                    "completedStages": {
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "cleaning",
+                                "reading_soil",
+                                "analysing_leaf",
+                                "matching_protocols"
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Completedstages",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "stage",
+                    "progress"
+                ],
+                "title": "ProcessingOut"
+            },
+            "QueuedOut": {
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "const": "queued",
+                        "title": "State",
+                        "default": "queued"
+                    },
+                    "position": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Position"
+                    }
+                },
+                "type": "object",
+                "title": "QueuedOut"
+            },
+            "RangeOut": {
+                "properties": {
+                    "low": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Low"
+                    },
+                    "high": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "High"
+                    }
+                },
+                "type": "object",
+                "title": "RangeOut"
+            },
+            "RegionOut": {
+                "properties": {
+                    "x": {
+                        "type": "number",
+                        "title": "X"
+                    },
+                    "y": {
+                        "type": "number",
+                        "title": "Y"
+                    },
+                    "w": {
+                        "type": "number",
+                        "title": "W"
+                    },
+                    "h": {
+                        "type": "number",
+                        "title": "H"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "x",
+                    "y",
+                    "w",
+                    "h"
+                ],
+                "title": "RegionOut"
+            },
+            "SoilReportOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "farmId": {
+                        "type": "string",
+                        "title": "Farmid"
+                    },
+                    "sampleDate": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sampledate"
+                    },
+                    "labName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Labname"
+                    },
+                    "cardImageUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Cardimageurl"
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "ocr",
+                            "manual",
+                            "lab"
+                        ],
+                        "title": "Source",
+                        "default": "ocr"
+                    },
+                    "confirmed": {
+                        "type": "boolean",
+                        "title": "Confirmed",
+                        "default": false
+                    },
+                    "values": {
+                        "items": {
+                            "$ref": "#/components/schemas/SoilValueOut"
+                        },
+                        "type": "array",
+                        "title": "Values"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "farmId",
+                    "values"
+                ],
+                "title": "SoilReportOut"
+            },
+            "SoilValueIn": {
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "enum": [
+                            "N",
+                            "P",
+                            "K",
+                            "pH",
+                            "EC",
+                            "OC"
+                        ],
+                        "title": "Key"
+                    },
+                    "value": {
+                        "type": "number",
+                        "title": "Value"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "key",
+                    "value"
+                ],
+                "title": "SoilValueIn"
+            },
+            "SoilValueOut": {
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "enum": [
+                            "N",
+                            "P",
+                            "K",
+                            "pH",
+                            "EC",
+                            "OC"
+                        ],
+                        "title": "Key"
+                    },
+                    "value": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Value"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "title": "Unit"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "deficient",
+                                    "sufficient",
+                                    "excess"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status"
+                    },
+                    "statusLabel": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Statuslabel"
+                    },
+                    "range": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RangeOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "confidence": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 1.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Confidence"
+                    },
+                    "needsReview": {
+                        "type": "boolean",
+                        "title": "Needsreview",
+                        "default": false
+                    },
+                    "region": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RegionOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "key",
+                    "unit"
+                ],
+                "title": "SoilValueOut"
+            },
+            "UploadRefOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "soil_card",
+                            "leaf"
+                        ],
+                        "title": "Kind"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "title": "Filename"
+                    },
+                    "mimeType": {
+                        "type": "string",
+                        "title": "Mimetype"
+                    },
+                    "sizeBytes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sizebytes"
+                    },
+                    "previewUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Previewurl"
+                    },
+                    "isSample": {
+                        "type": "boolean",
+                        "title": "Issample",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "kind",
+                    "fileName",
+                    "mimeType"
+                ],
+                "title": "UploadRefOut"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

@@ -26,8 +26,11 @@ import type {
   WeatherService,
 } from '../contracts';
 import { notImplemented } from '../errors';
-import { tokenStore } from './client';
+import { absolutizeAssetUrls, apiUrl, request, sendWithProgress, tokenStore } from './client';
 import { createUploadService, type UploadTransport } from '../upload/pipeline';
+import { decode, decodeList, decodePage } from '../decode';
+import { AnalysisResultSchema, AnalysisSummarySchema, CropSchema, JobRefSchema, JobStatusSchema } from '../schemas';
+import { toAnalysisResult, toAnalysisSummary, toCrop, toJobRef, toJobStatus } from '../mappers';
 
 const todo = (method: string) => (): Promise<never> => Promise.reject(notImplemented(method));
 
@@ -79,11 +82,25 @@ const farms: FarmService = {
   getSeasonTimeline: todo('farms.getSeasonTimeline'),
 };
 
-// TODO: implement ONE of these and pass it to createUploadService:
-//  - multipart: build FormData with `body` and `meta`, then sendWithProgress({ method: 'POST', ... }).
-//  - pre-signed: request a signed URL via request(), sendWithProgress({ method: 'PUT', body }),
-//    then confirm the upload and return the UploadRef payload.
-const uploadTransport: UploadTransport = () => Promise.reject(notImplemented('uploads.transport'));
+/**
+ * Multipart POST to the local API. The file is already validated and compressed by the upload
+ * pipeline; the server re-checks the real file type and size and answers with an UploadRef.
+ */
+const uploadTransport: UploadTransport = async (body, meta, { onProgress, signal }) => {
+  const form = new FormData();
+  form.append('kind', meta.kind);
+  form.append('fileName', meta.fileName);
+  form.append('file', body, meta.fileName);
+  const raw = await sendWithProgress({ url: apiUrl('/uploads'), method: 'POST', body: form, onProgress, signal });
+  return absolutizeAssetUrls(raw);
+};
+
+/** Crops the ML backend can actually diagnose. */
+export const httpListCrops: FarmService['listCrops'] = async (lang) =>
+  decodeList(CropSchema, await request('/crops', { query: { lang } }), toCrop);
+
+/** Real uploads, exported so the "local" data source can combine them with mock data. */
+export const httpUploads = createUploadService(uploadTransport);
 
 const demo: DemoService = {
   // Samples and scenarios exist only for the mock data source.
@@ -94,20 +111,44 @@ const demo: DemoService = {
   resetDemoData: () => Promise.resolve(),
 };
 
-const analysis: AnalysisService = {
-  // TODO: JobRefSchema → toJobRef.
-  submit: todo('analysis.submit'),
-  // TODO: JobStatusSchema → toJobStatus. Polled by the processing screen via usePolling.
-  getStatus: todo('analysis.getStatus'),
-  // TODO: AnalysisResultSchema → toAnalysisResult. Partial results use soilError/diagnosisError.
-  getResult: todo('analysis.getResult'),
-  cancel: todo('analysis.cancel'),
-  retry: todo('analysis.retry'),
-  get: todo('analysis.get'),
-  confirmSoil: todo('analysis.confirmSoil'),
-  // TODO: decodePage(AnalysisSummarySchema, raw, toAnalysisSummary).
-  list: todo('analysis.list'),
-  remove: todo('analysis.remove'),
+const seg = encodeURIComponent;
+
+/** Leaf + soil-card analysis, served by the local ML backend (backend/cropwise_api). */
+export const httpAnalysis: AnalysisService = {
+  async submit(input) {
+    const raw = await request('/analysis', { method: 'POST', body: input });
+    return decode(JobRefSchema, raw, toJobRef);
+  },
+  // Polled by the processing screen via usePolling.
+  async getStatus(jobId) {
+    return decode(JobStatusSchema, await request(`/analysis/jobs/${seg(jobId)}`), toJobStatus);
+  },
+  async getResult(jobId, lang) {
+    const raw = await request(`/analysis/jobs/${seg(jobId)}/result`, { query: { lang } });
+    return decode(AnalysisResultSchema, absolutizeAssetUrls(raw), toAnalysisResult);
+  },
+  async cancel(jobId) {
+    await request(`/analysis/jobs/${seg(jobId)}/cancel`, { method: 'POST' });
+  },
+  async retry(jobId) {
+    return decode(JobRefSchema, await request(`/analysis/jobs/${seg(jobId)}/retry`, { method: 'POST' }), toJobRef);
+  },
+  async get(analysisId, lang) {
+    const raw = await request(`/analysis/${seg(analysisId)}`, { query: { lang } });
+    return decode(AnalysisResultSchema, absolutizeAssetUrls(raw), toAnalysisResult);
+  },
+  async confirmSoil(analysisId, values, lang) {
+    const raw = await request(`/analysis/${seg(analysisId)}/soil`, { method: 'PUT', query: { lang }, body: { values } });
+    return decode(AnalysisResultSchema, absolutizeAssetUrls(raw), toAnalysisResult);
+  },
+  async list(params) {
+    const { page, pageSize, search, sort, lang, farmId, cropId, status } = params;
+    const raw = await request('/analysis', { query: { page, pageSize, search, sort, lang, farmId, cropId, status } });
+    return decodePage(AnalysisSummarySchema, raw, toAnalysisSummary);
+  },
+  async remove(analysisId) {
+    await request(`/analysis/${seg(analysisId)}`, { method: 'DELETE' });
+  },
 };
 
 const soil: SoilService = {
@@ -193,9 +234,9 @@ export function createHttpServices(): Services {
     auth,
     profile,
     farms,
-    uploads: createUploadService(uploadTransport),
+    uploads: httpUploads,
     demo,
-    analysis,
+    analysis: httpAnalysis,
     soil,
     advisory,
     transition,

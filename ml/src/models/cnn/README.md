@@ -119,3 +119,9 @@ relabels images.
 Before publishing dataset shards in a GitHub Release, review the source-specific license and
 attribution requirements recorded in the dataset report and bundle metadata. The combined bundle
 does not have one blanket license.
+
+## Serving the checkpoint to the website
+
+`backend/cropwise_api/ml/cnn.py` loads a `best.pt` from this trainer and applies the same preprocessing as
+`predict.py` (resize 256, centre-crop 224, ImageNet normalisation), so served predictions match evaluation. Start it
+with `backend/start.sh`; see [backend/README.md](../../../../backend/README.md).

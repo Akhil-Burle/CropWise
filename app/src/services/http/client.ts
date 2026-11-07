@@ -43,6 +43,34 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
   return url.toString();
 }
 
+/** Absolute-or-relative URL for an API path (used by multipart uploads, which bypass `request`). */
+export function apiUrl(path: string): string {
+  return buildUrl(path);
+}
+
+/**
+ * The backend returns file links as paths ("/api/uploads/…/file"). Through the dev proxy they already
+ * work; when VITE_API_BASE_URL points at another origin they must be prefixed with it.
+ */
+export function absolutizeAssetUrls<T>(raw: T): T {
+  const base = config.apiBaseUrl;
+  if (!/^https?:\/\//i.test(base)) return raw;
+  const origin = new URL(base).origin;
+  const walk = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(walk);
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [
+          k,
+          k.endsWith('Url') && typeof v === 'string' && v.startsWith('/') ? `${origin}${v}` : walk(v),
+        ]),
+      );
+    }
+    return value;
+  };
+  return walk(raw) as T;
+}
+
 /** Returns parsed JSON (unknown – always pass it through `decode`). Rejects with AppError. */
 export async function request(path: string, options: RequestOptions = {}): Promise<unknown> {
   const headers: Record<string, string> = { Accept: 'application/json', ...options.headers };
@@ -98,6 +126,8 @@ export function sendWithProgress(params: {
     xhr.open(params.method, params.url);
     xhr.withCredentials = true;
     Object.entries(params.headers ?? {}).forEach(([k, v]) => xhr.setRequestHeader(k, v));
+    const token = tokenStore.get();
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) params.onProgress?.(Math.round((e.loaded / e.total) * 100));
     };
@@ -108,7 +138,9 @@ export function sendWithProgress(params: {
         return;
       }
       if (xhr.status < 200 || xhr.status >= 300) {
-        reject(appError('UPLOAD_FAILED', `HTTP ${xhr.status}`));
+        const code = xhr.status === 413 ? 'FILE_TOO_LARGE' : xhr.status === 415 ? 'FILE_TYPE' : 'UPLOAD_FAILED';
+        // Bad input will not succeed on retry; a server hiccup might.
+        reject(appError(code, `HTTP ${xhr.status}`, { retryable: xhr.status >= 500 || xhr.status === 0 }));
         return;
       }
       try {

@@ -249,7 +249,7 @@ export const toDiagnosis = (d: S.DiseasePredictionDto): DiseasePrediction => {
     })),
     description: d.description ?? '',
     symptoms: d.symptoms ?? [],
-    severity: d.severity ?? 'none',
+    severity: d.severity ?? null,
     affectedAreaPct: d.affectedAreaPct ?? null,
     leafImageUrl: d.leafImageUrl ?? null,
     contentLang: lang(d.contentLang),

@@ -163,7 +163,7 @@ export default function Diagnosis() {
                   <Badge tone={low ? 'warn' : 'forest'}>{low ? t('diagnosis.confLow') : t('diagnosis.confGood')}</Badge>
                 </div>
                 <p className="text-sm text-ink-muted">{t('diagnosis.confidenceExplain')}</p>
-                <SeverityScale severity={d.severity} />
+                {d.severity ? <SeverityScale severity={d.severity} /> : null}
                 {d.affectedAreaPct !== null && d.affectedAreaPct > 0 ? (
                   <p className="text-sm">{t('diagnosis.affected', { pct: d.affectedAreaPct })}</p>
                 ) : null}

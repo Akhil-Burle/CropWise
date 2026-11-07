@@ -24,7 +24,8 @@ export interface DiseasePrediction extends Localized {
   alternatives: DiseaseAlternative[];
   description: string;
   symptoms: string[];
-  severity: Severity;
+  /** Null when the model only classifies and does not estimate severity. */
+  severity: Severity | null;
   affectedAreaPct: number | null;
   leafImageUrl: string | null;
 }

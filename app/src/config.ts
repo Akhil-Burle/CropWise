@@ -2,10 +2,11 @@
  * Runtime configuration and feature flags. This is the only place that reads env variables.
  * Both variables are optional: with no .env file the app runs fully offline on mock data.
  */
-export type DataSource = 'mock' | 'http';
+/** mock = offline demo · local = real ML backend for uploads/analysis, mock for the rest · http = all real. */
+export type DataSource = 'mock' | 'local' | 'http';
 
 const rawSource = import.meta.env.VITE_DATA_SOURCE;
-const dataSource: DataSource = rawSource === 'http' ? 'http' : 'mock';
+const dataSource: DataSource = rawSource === 'http' || rawSource === 'local' ? rawSource : 'mock';
 const isMock = dataSource === 'mock';
 
 export const config = {
@@ -23,7 +24,8 @@ export const config = {
     /** "Run full demo", sample-data buttons and scenario picker. */
     demoMode: isMock,
     /** "Demo data – not for real agricultural use" notice. */
-    demoBanner: isMock,
+    // Still shown in "local": advice and accounts are mock data there.
+    demoBanner: dataSource !== 'http',
     readAloud: true,
     adminArea: true,
   },

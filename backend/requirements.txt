@@ -1,0 +1,7 @@
+# Backend API. PyTorch + torchvision come from ml/requirements-train.txt (install them first,
+# choosing the build for your machine), and Pillow is already listed there.
+fastapi==0.115.6
+uvicorn==0.34.0
+python-multipart==0.0.20
+# only needed for the tests
+httpx==0.28.1
