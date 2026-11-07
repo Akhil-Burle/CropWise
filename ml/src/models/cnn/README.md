@@ -116,6 +116,12 @@ This evaluates the saved best checkpoint on validation data and writes `class_re
 reports same-crop/cross-crop errors and disease/symptom-to-healthy errors. It never deletes or
 relabels images.
 
+For the next manual review step, run `python ml/src/data/review_images.py` in the training environment
+and open `http://127.0.0.1:8765`. Inspect each source image, record notes and save a proposed decision.
+The tool saves `manual_review_decisions.csv` beside the report and resumes saved decisions on restart.
+See the [data tool guide](../../data/README.md) for review options. Review decisions do not modify
+the dataset automatically.
+
 Before publishing dataset shards in a GitHub Release, review the source-specific license and
 attribution requirements recorded in the dataset report and bundle metadata. The combined bundle
 does not have one blanket license.
