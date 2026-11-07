@@ -1,8 +1,10 @@
 """Disk storage for uploads and analysis records. Plain files, no database.
 
-    storage/uploads/<id>.bin   the validated bytes
-    storage/uploads/<id>.json  metadata
-    storage/analyses/<id>.json one analysis record
+    storage/uploads/<id>.bin          the validated bytes
+    storage/uploads/<id>.json         metadata
+    storage/uploads/<id>.card.jpg     soil card: the upright page the OCR regions refer to
+    storage/uploads/<id>.preview.jpg  browser-friendly preview of a PDF / HEIC / TIFF
+    storage/analyses/<id>.json        one analysis record
 """
 
 from __future__ import annotations
@@ -21,16 +23,40 @@ from PIL import Image, UnidentifiedImageError
 
 from .config import Settings
 
+try:  # HEIC/HEIF photos from iPhones and some Android cameras
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+except ImportError:  # pragma: no cover - optional dependency
+    pillow_heif = None
+
 ID_RE = re.compile(r"^[a-z]{2,6}_[0-9a-f]{32}$")
 
 #: kind -> accepted mime types (mirrors DEFAULT_CONSTRAINTS in app/src/services/upload/pipeline.ts)
 ACCEPTED: dict[str, set[str]] = {
     "leaf": {"image/jpeg", "image/png", "image/webp"},
-    "soil_card": {"image/jpeg", "image/png", "application/pdf"},
+    "soil_card": {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/tiff",
+        "application/pdf",
+    },
 }
-PIL_FORMAT_TO_MIME = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
+#: Pillow format name -> mime type. MPO is the JPEG flavour many Android cameras write.
+PIL_FORMAT_TO_MIME = {
+    "JPEG": "image/jpeg",
+    "MPO": "image/jpeg",
+    "PNG": "image/png",
+    "WEBP": "image/webp",
+    "HEIF": "image/heic",
+    "TIFF": "image/tiff",
+}
+#: Types every browser can show in an <img>; anything else gets a generated JPEG preview.
+BROWSER_SAFE = {"image/jpeg", "image/png", "image/webp"}
 
-Image.MAX_IMAGE_PIXELS = 60_000_000  # decompression-bomb guard
+Image.MAX_IMAGE_PIXELS = 100_000_000  # decompression-bomb guard (a 48 MP phone photo is 48 M)
 
 
 class UploadRejected(Exception):
@@ -107,15 +133,31 @@ class UploadStore:
     def path(self, upload_id: str) -> Path:
         return self._dir / f"{upload_id}.bin"
 
+    # ------------------------------------------------------------ derived files
+
+    def derived_path(self, upload_id: str, suffix: str) -> Path:
+        """suffix is a fixed internal name such as 'card.jpg' (never user input)."""
+        return self._dir / f"{upload_id}.{suffix}"
+
+    def has_derived(self, upload_id: str, suffix: str) -> bool:
+        return self.derived_path(upload_id, suffix).is_file()
+
+    def write_derived(self, upload_id: str, suffix: str, data: bytes) -> None:
+        _atomic_write(self.derived_path(upload_id, suffix), data)
+
+    # ------------------------------------------------------------ helpers
+
     @staticmethod
     def _sniff(data: bytes) -> str | None:
         if data[:5] == b"%PDF-":
             return "application/pdf"
         try:
             with Image.open(io.BytesIO(data)) as img:
-                img.verify()
-                return PIL_FORMAT_TO_MIME.get(img.format or "")
-        except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError):
+                fmt = img.format or ""
+                if fmt != "HEIF":  # HEIF decoders do their own validation when the image is read
+                    img.verify()
+                return PIL_FORMAT_TO_MIME.get(fmt)
+        except (UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombError):
             return None
 
     @staticmethod

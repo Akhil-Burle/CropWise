@@ -10,7 +10,7 @@ image integrity, groups duplicates and exports versioned shared manifests. Local
 status is described in `data/processed/` and the dataset preparation report in `docs/`.
 See [data setup](data/README.md) for curation commands and [CNN training](src/models/cnn/README.md)
 for the one-command clone setup, EfficientNet training, and optional dataset bundle distribution.
-The entry point is `python ml/run_cnn.py`. ViT training and OCR remain **not implemented**. A trained
+The entry point is `python ml/run_cnn.py`. ViT training remains **not implemented**. Soil-card OCR is implemented in `backend/cropwise_api/ml/soil/` (see [ocr/](src/ocr/README.md)). A trained
 CNN checkpoint can be served to the website through the local API in `backend/` (see
 [backend/README.md](../backend/README.md)); advice for its diagnoses still comes from demo protocols. Empty
 result CSVs mean not measured, not zero.
@@ -26,7 +26,7 @@ ml/
     models/cnn/              EfficientNet-B0 fine-tuning entry point
     models/vit/              ViT training/inference (planned)
     evaluation/              shared metrics and exports (planned)
-    ocr/                     separate soil-card OCR (planned)
+    ocr/                     notes only; the OCR code is in backend/cropwise_api/ml/soil/
   checkpoints/               local trained weights, ignored by Git
   results/
     comparison.csv           summary metrics for both models

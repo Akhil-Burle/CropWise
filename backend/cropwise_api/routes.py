@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
@@ -11,7 +11,8 @@ from fastapi.responses import FileResponse
 from . import soil as soil_rules
 from .diagnosis import humanize, model_crops
 from .ml.base import MlError
-from .render import render_analysis, summarize, upload_url
+from .previews import ensure_preview
+from .render import preview_url, render_analysis, render_soil, summarize
 from .schemas import (
     AnalysisInputIn,
     AnalysisPageOut,
@@ -22,8 +23,10 @@ from .schemas import (
     JobRefOut,
     JobStatusOut,
     Lang,
+    SoilModelInputOut,
     UploadRefOut,
 )
+from .ml.base import MlError
 from .state import AppState
 from .storage import UploadRejected, is_valid_id
 
@@ -56,6 +59,7 @@ def health(st: St) -> dict:
         "numClasses": model.info.num_classes if model else None,
         "soilReader": st.soil_reader.name,
         "detail": None if model else (st.leaf.error or "Model not loaded yet"),
+        "soilDetail": getattr(st.soil_reader, "reason", None) or None,
     }
 
 
@@ -98,7 +102,7 @@ async def create_upload(
         "fileName": record.file_name,
         "mimeType": record.mime_type,
         "sizeBytes": record.size_bytes,
-        "previewUrl": upload_url(st.settings, record.id) if record.mime_type != "application/pdf" else None,
+        "previewUrl": preview_url(st.settings, record),
         "isSample": False,
     }
 
@@ -111,6 +115,35 @@ def get_upload_file(upload_id: str, st: St) -> FileResponse:
     return FileResponse(
         st.uploads.path(upload_id),
         media_type=record.mime_type,
+        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"},
+    )
+
+
+@router.get("/uploads/{upload_id}/preview", tags=["uploads"])
+def get_upload_preview(upload_id: str, st: St) -> FileResponse:
+    """First page of a PDF / HEIC / TIFF as a JPEG a browser can show."""
+    record = st.uploads.get(upload_id)
+    if record is None:
+        raise _not_found("Upload")
+    try:
+        path = ensure_preview(st.uploads, record)
+    except MlError as exc:
+        raise HTTPException(status_code=422, detail={"code": exc.code, "message": exc.message}) from exc
+    return FileResponse(
+        path,
+        media_type="image/jpeg",
+        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"},
+    )
+
+
+@router.get("/uploads/{upload_id}/card", tags=["uploads"])
+def get_soil_card_view(upload_id: str, st: St) -> FileResponse:
+    """The upright page of a soil report that the OCR highlight boxes refer to."""
+    if st.uploads.get(upload_id) is None or not st.uploads.has_derived(upload_id, "card.jpg"):
+        raise _not_found("Soil card image")
+    return FileResponse(
+        st.uploads.derived_path(upload_id, "card.jpg"),
+        media_type="image/jpeg",
         headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"},
     )
 
@@ -244,37 +277,66 @@ def get_analysis(analysis_id: str, st: St, lang: Lang = "en") -> dict:  # noqa: 
 
 @router.put("/analysis/{analysis_id}/soil", response_model=AnalysisResultOut, tags=["analysis"])
 def confirm_soil(analysis_id: str, body: ConfirmSoilIn, st: St, lang: Lang = "en") -> dict:  # noqa: ARG001
+    """The farmer's final answer for the review form. A parameter that is left out means "not on my report"."""
     record = st.repo.get(analysis_id)
     if record is None:
         raise _not_found("Analysis")
 
+    submitted: dict[str, float] = {}
     errors: dict[str, str] = {}
     for item in body.values:
+        if item.key in submitted:
+            errors[item.key] = "duplicate"
+            continue
         low, high = soil_rules.LIMITS[item.key]
         if not (low <= item.value <= high):  # also rejects NaN
             errors[item.key] = "range"
+        submitted[item.key] = item.value
     if errors:
         raise HTTPException(status_code=422, detail={"fieldErrors": errors})
 
-    # Only values that differ from the OCR reading are recorded as the farmer's corrections.
+    # Keep only what differs from what the OCR read. None = the farmer says it is not on the report.
     ocr = ((record.get("soil") or {}).get("readings")) or {}
-    overrides = dict(record.get("soilOverrides") or {})
-    for item in body.values:
-        if (ocr.get(item.key) or {}).get("value") != item.value:
-            overrides[item.key] = item.value
-        else:
-            overrides.pop(item.key, None)
+    overrides: dict[str, float | None] = {}
+    for key in soil_rules.NUTRIENT_KEYS:
+        new, old = submitted.get(key), (ocr.get(key) or {}).get("value")
+        if new != old:
+            overrides[key] = new
+    final = {key: overrides[key] if key in overrides else (ocr.get(key) or {}).get("value") for key in soil_rules.NUTRIENT_KEYS}
+    if all(value is None for value in final.values()):
+        raise HTTPException(status_code=422, detail={"fieldErrors": {"values": "required"}})
 
+    now = datetime.now(timezone.utc)
     updated = st.repo.update(
         analysis_id,
         soilOverrides=overrides or None,
         soilConfirmed=True,
-        soilSampleDate=record.get("soilSampleDate") or date.today().isoformat(),
-        # A confirmed card with no upload (manual-only) still needs a soil block to hang off.
-        soil=record.get("soil") or {"readings": {}, "labName": None, "sampleDate": None, "error": None},
+        soilConfirmedAt=now.isoformat(timespec="seconds"),
+        # A leaf-only analysis has no soil block yet; manual entry creates one to hang the values on.
+        soil=record.get("soil") or {"readings": {}, "labName": None, "sampleDate": None, "error": None, "engine": None},
+    )
+    assert updated is not None
+    report, _ = render_soil(updated, st.settings, st.uploads)
+    assert report is not None
+    updated = st.repo.update(
+        analysis_id,
+        soilModelInput=soil_rules.model_input(
+            updated, report, overrides, (updated.get("soil") or {}).get("engine"), updated["soilConfirmedAt"]
+        ),
     )
     assert updated is not None
     return render_analysis(updated, st.settings, st.uploads)
+
+
+@router.get("/analysis/{analysis_id}/soil/model-input", response_model=SoilModelInputOut, tags=["analysis"])
+def soil_model_input(analysis_id: str, st: St) -> dict:
+    """Confirmed soil values in the fixed form a soil model will consume (no model uses them yet)."""
+    record = st.repo.get(analysis_id)
+    if record is None:
+        raise _not_found("Analysis")
+    if not record.get("soilConfirmed") or not record.get("soilModelInput"):
+        raise HTTPException(status_code=409, detail={"message": "Soil values are not confirmed yet"})
+    return record["soilModelInput"]
 
 
 @router.delete("/analysis/{analysis_id}", status_code=204, tags=["analysis"])

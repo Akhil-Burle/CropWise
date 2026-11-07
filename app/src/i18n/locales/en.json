@@ -281,7 +281,7 @@
     "dropTitle": "Drop a file here",
     "cardTitle": "Drag the soil card here",
     "leafTitle": "Drag the leaf photo here",
-    "cardHint": "JPG, PNG or PDF, up to {{mb}} MB",
+    "cardHint": "Photo, scan or PDF (JPG, PNG, WebP, HEIC, TIFF), up to {{mb}} MB",
     "leafHint": "JPG, PNG or WebP, up to {{mb}} MB. Large photos are made smaller before upload.",
     "takePhoto": "Take photo",
     "chooseFile": "Choose file",
@@ -374,7 +374,24 @@
     "rangeError": "This value looks out of range. Please check the card.",
     "retake": "Retake photo",
     "enterManually": "Enter values manually",
-    "confirm": "Confirm values"
+    "confirm": "Confirm values",
+    "reason": {
+      "not_found": "Not found on the card. Type it if it is printed, or leave empty.",
+      "unreadable": "Could not read this number. Check the card and type it.",
+      "low_confidence": "We are not sure about this one. Please compare with the card.",
+      "ambiguous": "The card shows more than one value. Please check.",
+      "out_of_range": "The number we read is not possible for this value. Please check the card.",
+      "unit_unclear": "The unit on the card is one we cannot convert. Please type the value in the unit shown below.",
+      "unit_converted": "Converted from the unit on your card. Please check.",
+      "unit_assumed": "No unit was printed, so the usual one was assumed. Please check.",
+      "decimal_repaired": "The decimal point was missing, so we added it. Please check.",
+      "digits_repaired": "Some characters looked like digits. Please check.",
+      "from_organic_matter": "Worked out from organic matter on your card. Please check.",
+      "unusual_value": "This value is unusual for soil. Please check the card."
+    },
+    "needOne": "Type at least one value from your card to continue.",
+    "leaveBlank": "Leave empty if it is not on your report",
+    "notANumber": "Please type a number."
   },
   "soil": {
     "nutrient": {

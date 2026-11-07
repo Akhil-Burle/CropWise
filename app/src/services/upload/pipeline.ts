@@ -18,18 +18,44 @@ export type UploadTransport = (
 
 const MB = 1024 * 1024;
 
+/**
+ * Limits apply to the file the user picks. Photos are shrunk before they are sent, so a 12 MB camera
+ * shot is fine; the cap mostly guards PDFs, which are sent as they are.
+ */
 export const DEFAULT_CONSTRAINTS: Record<UploadKind, UploadConstraints> = {
   soil_card: {
-    acceptedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-    maxBytes: 10 * MB,
+    // photo, scan or PDF: JPEG/PNG/WebP, iPhone HEIC, scanner TIFF
+    acceptedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/tiff', 'application/pdf'],
+    maxBytes: 25 * MB,
     maxDimension: 2200,
   },
   leaf: {
     acceptedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxBytes: 10 * MB,
+    maxBytes: 25 * MB,
     maxDimension: 1600,
   },
 };
+
+const EXTENSION_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heic',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  pdf: 'application/pdf',
+};
+
+/** Browsers often report no type for HEIC/TIFF files, and "image/heif" for some HEIC ones. */
+export function effectiveType(file: Pick<File, 'type' | 'name'>): string {
+  const declared = (file.type || '').toLowerCase();
+  if (declared === 'image/heif') return 'image/heic';
+  if (declared && declared !== 'application/octet-stream') return declared;
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return EXTENSION_TYPES[ext] ?? declared;
+}
 
 export function createUploadService(
   transport: UploadTransport,
@@ -37,8 +63,9 @@ export function createUploadService(
 ): UploadService {
   const validate = (file: File, kind: UploadKind) => {
     const c = constraints[kind];
-    if (!c.acceptedMimeTypes.includes(file.type)) {
-      return appError('FILE_TYPE', `Unsupported type ${file.type || 'unknown'}`, { retryable: false });
+    const type = effectiveType(file);
+    if (!c.acceptedMimeTypes.includes(type)) {
+      return appError('FILE_TYPE', `Unsupported type ${type || 'unknown'}`, { retryable: false });
     }
     if (file.size > c.maxBytes) {
       return appError('FILE_TOO_LARGE', `File is ${(file.size / MB).toFixed(1)} MB`, { retryable: false });
@@ -55,7 +82,7 @@ export function createUploadService(
       if (invalid) throw invalid;
       try {
         const body = await compressImage(file, constraints[kind].maxDimension);
-        const mimeType = body.type || file.type;
+        const mimeType = body.type || effectiveType(file);
         const raw = await transport(body, { fileName: file.name, mimeType, kind }, options);
         return decode(UploadRefSchema, raw, toUploadRef);
       } catch (error) {

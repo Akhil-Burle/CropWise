@@ -47,6 +47,13 @@ def create_app(settings: Settings | None = None, *, leaf_factory=build_leaf_clas
             except MlError as exc:
                 # Keep serving: /health reports the problem and the first analysis retries the load.
                 log.error("Leaf model not loaded at startup: %s", exc.message)
+            warm_up = getattr(soil_reader, "warm_up", None)
+            if warm_up is not None:
+                try:
+                    warm_up()
+                    log.info("Soil card reader ready: %s", soil_reader.name)
+                except MlError as exc:
+                    log.error("Soil card reader not started: %s", exc.message)
         try:
             yield
         finally:

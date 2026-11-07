@@ -14,6 +14,7 @@ export const SoilValueSchema = z.object({
   range: RangeSchema.nullish(),
   confidence: z.number().min(0).max(1).nullish(),
   needsReview: z.boolean().nullish(),
+  reviewReason: z.string().nullish(),
   region: z
     .object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() })
     .nullish(),

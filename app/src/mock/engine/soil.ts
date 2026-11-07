@@ -93,6 +93,7 @@ export function buildSoilValues(readings: RawReading[], lang: Lang, withRegions:
       range: { low: norm.low, high: norm.high },
       confidence,
       needsReview: value === null || (confidence !== null && confidence < REVIEW_THRESHOLD),
+      reviewReason: value === null ? 'not_found' : confidence !== null && confidence < REVIEW_THRESHOLD ? 'low_confidence' : null,
       region: withRegions ? cardRegion(key) : null,
     };
   });

@@ -65,6 +65,8 @@ class SoilValueIn(Wire):
 
 
 class ConfirmSoilIn(Wire):
+    """The farmer's final answer for the form. A parameter left out means "not on my report"."""
+
     values: list[SoilValueIn] = Field(min_length=1, max_length=6)
 
 
@@ -136,6 +138,8 @@ class SoilValueOut(Wire):
     range: RangeOut | None = None
     confidence: float | None = Field(default=None, ge=0, le=1)
     needs_review: bool = False
+    #: why the farmer should check this field (not_found, unreadable, unit_converted, ...)
+    review_reason: str | None = None
     region: RegionOut | None = None
 
 
@@ -218,6 +222,33 @@ class AnalysisPageOut(Wire):
     has_more: bool
 
 
+# ---------------------------------------------------------------- soil model input
+
+
+class FieldProvenanceOut(Wire):
+    origin: Literal["ocr", "farmer_edited", "farmer_entered", "missing"]
+    confidence: float | None = None
+
+
+class SoilModelInputOut(Wire):
+    """Confirmed soil values, ready for a soil model. Fixed units; see soil.model_input()."""
+
+    schema_version: int = 1
+    analysis_id: str
+    farm_id: str
+    crop_id: str
+    growth_stage: GrowthStage
+    sample_date: str | None = None
+    features: dict[NutrientKey, float | None]
+    units: dict[NutrientKey, str]
+    status: dict[NutrientKey, Literal["deficient", "sufficient", "excess"] | None]
+    provenance: dict[NutrientKey, FieldProvenanceOut]
+    complete: bool
+    source: Literal["ocr", "manual", "mixed"]
+    ocr_engine: str | None = None
+    confirmed_at: str
+
+
 # ---------------------------------------------------------------- crops
 
 
@@ -240,3 +271,4 @@ class HealthOut(Wire):
     num_classes: int | None = None
     soil_reader: str
     detail: str | None = None
+    soil_detail: str | None = None

@@ -1,7 +1,17 @@
 # Backend API. PyTorch + torchvision come from ml/requirements-train.txt (install them first,
-# choosing the build for your machine), and Pillow is already listed there.
+# choosing the build for your machine); Pillow and numpy are already pulled in by them.
 fastapi==0.115.6
 uvicorn==0.34.0
 python-multipart==0.0.20
+
+# Soil report reading. All local; nothing is downloaded at run time (the OCR models ship in the wheel).
+# RapidOCR runs the PaddleOCR PP-OCR model family on ONNX Runtime. PaddlePaddle itself publishes no
+# wheel for current Python versions, so PaddleOCR cannot be installed on this setup.
+rapidocr==3.10.0
+onnxruntime==1.31.1
+opencv-python-headless==5.0.0.93
+pypdfium2==5.15.0
+pillow-heif==1.8.1
+
 # only needed for the tests
 httpx==0.28.1

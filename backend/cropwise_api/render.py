@@ -6,17 +6,33 @@ from typing import Any
 
 from . import soil as soil_rules
 from .config import Settings
-from .storage import UploadStore
+from .storage import BROWSER_SAFE, UploadRecord, UploadStore
 
 
 def upload_url(settings: Settings, upload_id: str | None) -> str | None:
     return f"{settings.api_prefix}/uploads/{upload_id}/file" if upload_id else None
 
 
+def preview_url(settings: Settings, record: UploadRecord) -> str:
+    """Link a browser can show in an <img>: the file itself, or a generated JPEG for PDF / HEIC / TIFF."""
+    kind = "file" if record.mime_type in BROWSER_SAFE else "preview"
+    return f"{settings.api_prefix}/uploads/{record.id}/{kind}"
+
+
+def card_url(settings: Settings, uploads: UploadStore, upload_id: str | None) -> str | None:
+    """The image shown next to the review form: the upright page the highlight boxes refer to."""
+    record = uploads.get(upload_id) if upload_id else None
+    if record is None:
+        return None
+    if uploads.has_derived(record.id, "card.jpg"):
+        return f"{settings.api_prefix}/uploads/{record.id}/card"
+    return preview_url(settings, record)
+
+
 def render_soil(record: dict[str, Any], settings: Settings, uploads: UploadStore) -> tuple[dict | None, dict | None]:
     """Returns (soil report, soil error). The OCR error stays visible after manual entry."""
     soil = record.get("soil")
-    overrides: dict[str, float] | None = record.get("soilOverrides")
+    overrides: dict[str, float | None] = record.get("soilOverrides") or {}
     if soil is None and not overrides:
         return None, None
 
@@ -25,22 +41,20 @@ def render_soil(record: dict[str, Any], settings: Settings, uploads: UploadStore
         return None, error
 
     readings = {k: dict(v) for k, v in ((soil or {}).get("readings") or {}).items()}
-    for key, value in (overrides or {}).items():
-        readings[key] = {"value": value, "confidence": None, "region": None}
+    for key, value in overrides.items():  # the farmer's answers win; None = "not on my report"
+        previous = readings.get(key) or {}
+        readings[key] = {"value": value, "confidence": None, "region": previous.get("region"), "reason": None}
 
-    upload = uploads.get(record["soilUploadId"]) if record.get("soilUploadId") else None
-    # Highlight boxes and the card image only make sense for raster images (not a PDF).
-    card_url = upload_url(settings, upload.id) if upload and upload.mime_type != "application/pdf" else None
     manual = bool(error) or not record.get("soilUploadId")
     report = {
         "id": f"soil-{record['id']}",
         "farmId": record["farmId"],
         "sampleDate": record.get("soilSampleDate") or (soil or {}).get("sampleDate"),
         "labName": (soil or {}).get("labName"),
-        "cardImageUrl": card_url,
+        "cardImageUrl": card_url(settings, uploads, record.get("soilUploadId")),
         "source": "manual" if manual else "ocr",
         "confirmed": bool(record.get("soilConfirmed")),
-        "values": soil_rules.build_values(readings),
+        "values": soil_rules.build_values(readings, reviewed=bool(record.get("soilConfirmed"))),
     }
     return report, error
 

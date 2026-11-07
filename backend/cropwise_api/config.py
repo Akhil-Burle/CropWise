@@ -37,8 +37,14 @@ class Settings:
     #: If the selected crop owns less than this share of the model's probability mass, the photo is
     #: diagnosed as the crop the model actually sees (and the result says so).
     min_crop_mass: float = field(default_factory=lambda: float(_env("MIN_CROP_MASS", "0.20")))
-    #: Upload size cap per file (the web app already compresses to well under this).
-    max_upload_bytes: int = field(default_factory=lambda: int(_env("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024))))
+    #: Upload size cap per file. Phone photos are large; the web app compresses images before sending.
+    max_upload_bytes: int = field(default_factory=lambda: int(_env("MAX_UPLOAD_BYTES", str(25 * 1024 * 1024))))
+    #: Soil card reader: "rapidocr" (local OCR) or "unavailable" (cards are stored, values typed by hand).
+    soil_reader: str = field(default_factory=lambda: _env("SOIL_READER", "rapidocr"))
+    #: Pages of a PDF / multi-page scan that are read (the rest are ignored).
+    ocr_max_pages: int = field(default_factory=lambda: int(_env("OCR_MAX_PAGES", "4")))
+    #: A value read with less confidence than this is left blank for the farmer to fill in.
+    ocr_fill_min_confidence: float = field(default_factory=lambda: float(_env("OCR_FILL_MIN_CONFIDENCE", "0.50")))
     #: Browser origins allowed to call the API directly (the Vite proxy needs none of this).
     cors_origins: list[str] = field(
         default_factory=lambda: _csv(

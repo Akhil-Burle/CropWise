@@ -1,8 +1,7 @@
-"""Soil Health Card reader. The OCR (ml/src/ocr) is not implemented yet.
+"""Fallback soil card reader, used when the OCR packages are not installed or OCR is turned off.
 
-Until it is, uploaded cards are stored and the analysis reports ``UNREADABLE_SOIL_CARD``; the web
-app then offers manual entry (``PUT /analysis/{id}/soil``). When OCR exists, implement
-``SoilCardReader`` and return it from ``registry.build_soil_reader``.
+Cards are still stored and shown; the analysis reports ``UNREADABLE_SOIL_CARD`` and the web app offers
+manual entry (``PUT /analysis/{id}/soil``). The real reader is ``ml/soil/`` (local OCR).
 """
 
 from __future__ import annotations
@@ -13,5 +12,8 @@ from .base import MlError, SoilCardResult
 class UnavailableSoilReader:
     name = "unavailable"
 
+    def __init__(self, reason: str = "") -> None:
+        self.reason = reason
+
     def read(self, data: bytes, mime_type: str) -> SoilCardResult:  # noqa: ARG002
-        raise MlError("UNREADABLE_SOIL_CARD", "Soil card reading is not available yet", retryable=False)
+        raise MlError("UNREADABLE_SOIL_CARD", "Soil card reading is not available; please type the values", retryable=False)

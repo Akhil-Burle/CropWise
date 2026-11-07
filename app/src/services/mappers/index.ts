@@ -162,6 +162,7 @@ export const toSoilValue = (d: S.SoilValueDto): SoilValue => ({
   range: { low: d.range?.low ?? null, high: d.range?.high ?? null },
   confidence: d.confidence ?? null,
   needsReview: d.needsReview ?? false,
+  reviewReason: d.reviewReason ?? null,
   region: d.region ?? null,
 });
 

@@ -26,6 +26,67 @@
                 }
             }
         },
+        "/api/crops": {
+            "get": {
+                "tags": [
+                    "crops"
+                ],
+                "summary": "List Crops",
+                "description": "Crops the loaded leaf model can diagnose (so the website never offers one it cannot read).",
+                "operationId": "list_crops_api_crops_get",
+                "parameters": [
+                    {
+                        "name": "lang",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "enum": [
+                                "en",
+                                "hi",
+                                "kn",
+                                "ta",
+                                "te",
+                                "mr",
+                                "bn",
+                                "gu",
+                                "ml",
+                                "pa",
+                                "or"
+                            ],
+                            "type": "string",
+                            "default": "en",
+                            "title": "Lang"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CropOut"
+                                    },
+                                    "title": "Response List Crops Api Crops Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/uploads": {
             "post": {
                 "tags": [
@@ -74,6 +135,88 @@
                 ],
                 "summary": "Get Upload File",
                 "operationId": "get_upload_file_api_uploads__upload_id__file_get",
+                "parameters": [
+                    {
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Upload Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/uploads/{upload_id}/preview": {
+            "get": {
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Get Upload Preview",
+                "description": "First page of a PDF / HEIC / TIFF as a JPEG a browser can show.",
+                "operationId": "get_upload_preview_api_uploads__upload_id__preview_get",
+                "parameters": [
+                    {
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Upload Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/uploads/{upload_id}/card": {
+            "get": {
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Get Soil Card View",
+                "description": "The upright page of a soil report that the OCR highlight boxes refer to.",
+                "operationId": "get_soil_card_view_api_uploads__upload_id__card_get",
                 "parameters": [
                     {
                         "name": "upload_id",
@@ -620,6 +763,7 @@
                     "analysis"
                 ],
                 "summary": "Confirm Soil",
+                "description": "The farmer's final answer for the review form. A parameter that is left out means \"not on my report\".",
                 "operationId": "confirm_soil_api_analysis__analysis_id__soil_put",
                 "parameters": [
                     {
@@ -672,6 +816,49 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/AnalysisResultOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/analysis/{analysis_id}/soil/model-input": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Soil Model Input",
+                "description": "Confirmed soil values in the fixed form a soil model will consume (no model uses them yet).",
+                "operationId": "soil_model_input_api_analysis__analysis_id__soil_model_input_get",
+                "parameters": [
+                    {
+                        "name": "analysis_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Analysis Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SoilModelInputOut"
                                 }
                             }
                         }
@@ -1171,7 +1358,55 @@
                 "required": [
                     "values"
                 ],
-                "title": "ConfirmSoilIn"
+                "title": "ConfirmSoilIn",
+                "description": "The farmer's final answer for the form. A parameter left out means \"not on my report\"."
+            },
+            "CropOut": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "scientificName": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scientificname"
+                    },
+                    "contentLang": {
+                        "type": "string",
+                        "enum": [
+                            "en",
+                            "hi",
+                            "kn",
+                            "ta",
+                            "te",
+                            "mr",
+                            "bn",
+                            "gu",
+                            "ml",
+                            "pa",
+                            "or"
+                        ],
+                        "title": "Contentlang",
+                        "default": "en"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "CropOut"
             },
             "DiseasePredictionOut": {
                 "properties": {
@@ -1360,6 +1595,36 @@
                 ],
                 "title": "FailedOut"
             },
+            "FieldProvenanceOut": {
+                "properties": {
+                    "origin": {
+                        "type": "string",
+                        "enum": [
+                            "ocr",
+                            "farmer_edited",
+                            "farmer_entered",
+                            "missing"
+                        ],
+                        "title": "Origin"
+                    },
+                    "confidence": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Confidence"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "origin"
+                ],
+                "title": "FieldProvenanceOut"
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -1445,6 +1710,17 @@
                             }
                         ],
                         "title": "Detail"
+                    },
+                    "soilDetail": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Soildetail"
                     }
                 },
                 "type": "object",
@@ -1620,6 +1896,178 @@
                     "h"
                 ],
                 "title": "RegionOut"
+            },
+            "SoilModelInputOut": {
+                "properties": {
+                    "schemaVersion": {
+                        "type": "integer",
+                        "title": "Schemaversion",
+                        "default": 1
+                    },
+                    "analysisId": {
+                        "type": "string",
+                        "title": "Analysisid"
+                    },
+                    "farmId": {
+                        "type": "string",
+                        "title": "Farmid"
+                    },
+                    "cropId": {
+                        "type": "string",
+                        "title": "Cropid"
+                    },
+                    "growthStage": {
+                        "type": "string",
+                        "enum": [
+                            "vegetative",
+                            "flowering",
+                            "fruiting"
+                        ],
+                        "title": "Growthstage"
+                    },
+                    "sampleDate": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sampledate"
+                    },
+                    "features": {
+                        "additionalProperties": {
+                            "anyOf": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        },
+                        "propertyNames": {
+                            "enum": [
+                                "N",
+                                "P",
+                                "K",
+                                "pH",
+                                "EC",
+                                "OC"
+                            ]
+                        },
+                        "type": "object",
+                        "title": "Features"
+                    },
+                    "units": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "propertyNames": {
+                            "enum": [
+                                "N",
+                                "P",
+                                "K",
+                                "pH",
+                                "EC",
+                                "OC"
+                            ]
+                        },
+                        "type": "object",
+                        "title": "Units"
+                    },
+                    "status": {
+                        "additionalProperties": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "enum": [
+                                        "deficient",
+                                        "sufficient",
+                                        "excess"
+                                    ]
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        },
+                        "propertyNames": {
+                            "enum": [
+                                "N",
+                                "P",
+                                "K",
+                                "pH",
+                                "EC",
+                                "OC"
+                            ]
+                        },
+                        "type": "object",
+                        "title": "Status"
+                    },
+                    "provenance": {
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/FieldProvenanceOut"
+                        },
+                        "propertyNames": {
+                            "enum": [
+                                "N",
+                                "P",
+                                "K",
+                                "pH",
+                                "EC",
+                                "OC"
+                            ]
+                        },
+                        "type": "object",
+                        "title": "Provenance"
+                    },
+                    "complete": {
+                        "type": "boolean",
+                        "title": "Complete"
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "ocr",
+                            "manual",
+                            "mixed"
+                        ],
+                        "title": "Source"
+                    },
+                    "ocrEngine": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ocrengine"
+                    },
+                    "confirmedAt": {
+                        "type": "string",
+                        "title": "Confirmedat"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "analysisId",
+                    "farmId",
+                    "cropId",
+                    "growthStage",
+                    "features",
+                    "units",
+                    "status",
+                    "provenance",
+                    "complete",
+                    "source",
+                    "confirmedAt"
+                ],
+                "title": "SoilModelInputOut",
+                "description": "Confirmed soil values, ready for a soil model. Fixed units; see soil.model_input()."
             },
             "SoilReportOut": {
                 "properties": {
@@ -1804,6 +2252,17 @@
                         "type": "boolean",
                         "title": "Needsreview",
                         "default": false
+                    },
+                    "reviewReason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reviewreason"
                     },
                     "region": {
                         "anyOf": [

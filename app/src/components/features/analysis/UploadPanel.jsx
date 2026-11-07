@@ -9,7 +9,10 @@ import { Badge, Button, ErrorState, FileDropzone, Meter } from '@/components/ui'
 import { cx } from '@/utils/browser';
 import { readAsLocalPhoto } from '@/hooks/useOutbox';
 
-const ACCEPT = { soil_card: 'image/jpeg,image/png,application/pdf', leaf: 'image/jpeg,image/png,image/webp' };
+const ACCEPT = {
+  soil_card: 'image/jpeg,image/png,image/webp,image/heic,image/heif,image/tiff,application/pdf,.heic,.heif,.tif,.tiff,.pdf',
+  leaf: 'image/jpeg,image/png,image/webp',
+};
 
 /**
  * Upload step body: dropzone/camera, real progress from the UploadService callback, cancel,
@@ -81,6 +84,8 @@ export default function UploadPanel({ kind, value, onChange, hint, allowOffline 
 
   if (value) {
     const isPdf = value.mimeType === 'application/pdf';
+    // PDFs rotate/crop nothing; a PDF with a generated first-page preview is shown like a photo.
+    const showImage = Boolean(value.previewUrl);
     return (
       <div className="space-y-4">
         <div className="overflow-hidden rounded-xl border border-line bg-surface">
@@ -89,7 +94,7 @@ export default function UploadPanel({ kind, value, onChange, hint, allowOffline 
             {value.isSample ? <Badge tone="ochre" size="sm">{t('upload.sampleBadge')}</Badge> : null}
           </div>
           <div className="relative grid min-h-[240px] place-items-center bg-surface-2 p-4">
-            {isPdf || !value.previewUrl ? (
+            {!showImage ? (
               <div className="flex flex-col items-center gap-2 text-ink-muted">
                 <FileText className="h-12 w-12" aria-hidden="true" />
                 <span className="text-sm">{t('upload.pdfPreview')}</span>
@@ -99,6 +104,7 @@ export default function UploadPanel({ kind, value, onChange, hint, allowOffline 
                 <img
                   src={value.previewUrl}
                   alt={kind === 'leaf' ? t('upload.leafPreviewAlt') : t('upload.cardPreviewAlt')}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   className="max-h-[360px] w-auto rounded-md object-contain transition-transform duration-300"
                   style={{ transform: `rotate(${rotation}deg)` }}
                 />

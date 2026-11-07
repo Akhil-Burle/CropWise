@@ -52,8 +52,10 @@ class SoilReading:
     value: float | None
     #: 0-1, or None for manual entry.
     confidence: float | None = None
-    #: Image-relative box (fractions) of the number on the card, if known.
+    #: Image-relative box (x, y, w, h as fractions) of the number on the card, if known.
     region: tuple[float, float, float, float] | None = None
+    #: Why the farmer should look at this field (see REVIEW_REASONS in soil.py), or None.
+    reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,10 @@ class SoilCardResult:
     readings: list[SoilReading]
     lab_name: str | None = None
     sample_date: str | None = None  # ISO date
+    #: JPEG of the upright page the regions refer to (what the review screen shows).
+    view_image: bytes | None = None
+    engine: str | None = None
+    pages: int = 1
 
 
 @runtime_checkable

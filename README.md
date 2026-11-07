@@ -50,8 +50,8 @@ cropwise/
     android/      generated Android project
   tools/i18n/   full-sentence translation pipeline + glossary
   contracts/    openapi.json from FastAPI goes here
-  backend/      FastAPI local ML API (uploads + analysis jobs → CNN) – see backend/README.md
-  ml/           paired CNN and ViT study + separate soil-card OCR (planned)
+  backend/      FastAPI local ML API (uploads, analysis jobs, leaf CNN, soil-report OCR) – see backend/README.md
+  ml/           paired CNN and ViT study; soil-card OCR lives in backend/cropwise_api/ml/soil/
     configs/    shared experiment specification
     data/       local datasets and shared split manifests
     src/        shared data/evaluation, separate models/cnn/, models/vit/ and ocr/
@@ -93,7 +93,8 @@ real local notifications when a crop becomes safe to harvest, and an offline out
 The role returned at login decides the view.
 
 - **Farmer** (default): home with one alert + 4 big buttons (Check my crop, My sprays, Learn, Call for
-  help); "Check my crop" = stage picture + leaf photo (soil card optional, farm/crop remembered);
+  help); "Check my crop" = stage picture + leaf photo (soil card optional, farm/crop remembered); a soil card is read by OCR and shown as a review form
+  (values filled in, doubtful ones left empty for the farmer);
   answer screen = what's wrong (sure / likely / not sure), what to do today for *their* field
   (organic and chemical as equal choices, dose only after the safety promise), soil in plain sentences,
   "Remind me to spray". No charts, no animations, large text by default, read-aloud everywhere.
@@ -146,11 +147,20 @@ the toxicity band. 48px minimum targets, 3px focus ring, reduced-motion respecte
 
 ## Running the website against the local ML backend
 
-The leaf photo and soil card can go to the CNN on this machine (nothing is hosted). Start the API with
+The leaf photo and soil report can go to the models on this machine (nothing is hosted). Start the API with
 `backend/start.sh`, then `cd app && npm run dev:local`. Uploads, analysis and the crop list are real; accounts
 and learning content stay mock, and advice follows the real diagnosis but uses the demo protocols (only 3
 diseases have a spray dose; the rest get general organic guidance). Use real photos: the bundled sample
 buttons are hidden in this mode. See [backend/README.md](backend/README.md).
+
+**Soil report flow.** Upload the report as a camera photo, a scan or a PDF (JPG, PNG, WebP, HEIC, TIFF, PDF).
+Local OCR reads pH, EC, organic carbon, N, P and K (converting ppm, kg/acre, µS/cm etc.), and the next page shows
+the report next to a form: values it is sure of are filled in, doubtful ones are highlighted with a reason, and
+anything it could not read is left empty. The farmer completes or corrects the form, leaves empty what is not on
+the report, and confirms. The confirmed values are then stored in a fixed, model-ready format
+(`GET /api/analysis/{id}/soil/model-input`); no soil model uses it yet.
+Sample files to try: `images_test/soil_cards/` (PNG, PDF, a tilted photo, and a smudged card that should come back
+mostly empty). The demo SVG cards in `app/public/samples/` are mock-mode only; the app does not accept SVG uploads.
 
 ## Connecting a real backend
 
@@ -169,8 +179,8 @@ Every method must reject with `AppError` (`src/services/errors.ts`).
 | `AuthService` | `OtpChallenge` from requestOtp/register; `Session` from verifyOtp/refresh/loginAsDemo; `User \| null` from getCurrentUser. Token storage (cookie or bearer via `tokenStore`) is private to the adapter. Emit `sessionEvents.emitUnauthorized()` on 401 (done by `http/client.ts`). |
 | `ProfileService` | `Profile`, `DataExport` |
 | `FarmService` | `Paginated<Farm>`, `Farm`, `Crop[]`, `Region[]`, `SeasonTimelineItem[]` |
-| `UploadService` | Built with `createUploadService(transport)` – supply a multipart or pre-signed-URL transport; resolves `UploadRef`, reports progress, supports abort. **Implemented** (multipart to the local API). |
-| `AnalysisService` | `submit → {jobId}`, `getStatus → AnalysisJobStatus` (queued / processing(stage, progress) / completed(parts) / failed(error) / cancelled), `getResult/get/confirmSoil → AnalysisResult` (partial results via `soilError`/`diagnosisError`), `list → Paginated<AnalysisSummary>`. **Implemented** against the local API. |
+| `UploadService` | Built with `createUploadService(transport)` – supply a multipart or pre-signed-URL transport; resolves `UploadRef`, reports progress, supports abort. **Implemented** (multipart to the local API). Accepts JPG, PNG, WebP, HEIC, TIFF and PDF for soil cards (HEIC/TIFF are recognised by file extension when the browser gives no type); photos are shrunk before sending. |
+| `AnalysisService` | `submit → {jobId}`, `getStatus → AnalysisJobStatus` (queued / processing(stage, progress) / completed(parts) / failed(error) / cancelled), `getResult/get/confirmSoil → AnalysisResult` (partial results via `soilError`/`diagnosisError`), `list → Paginated<AnalysisSummary>`. **Implemented** against the local API; `confirmSoil` takes only the values the farmer typed (a missing parameter means "not on my report"). |
 | `SoilService` | `Paginated<SoilReport>`, `SoilReport \| null`, `SoilTrend`, `SoilComparison` |
 | `AdvisoryService` | `DualAdvisory` with doses already computed for the requested area; `{saved}`; `AdvisoryReport` (`url` or `unavailable` → print fallback); `ShareMessage` |
 | `TransitionService` | `TransitionPlan` (years, ROI, break-even, yield, SOC, seasons) for a speed; `SeasonTask` |

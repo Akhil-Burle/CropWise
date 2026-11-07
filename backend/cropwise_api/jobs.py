@@ -26,7 +26,7 @@ from .storage import AnalysisRepo, UploadStore, new_id
 
 log = logging.getLogger("cropwise.jobs")
 
-STAGE_WEIGHT = {"cleaning": 1, "reading_soil": 2, "analysing_leaf": 3, "matching_protocols": 1}
+STAGE_WEIGHT = {"cleaning": 1, "reading_soil": 4, "analysing_leaf": 3, "matching_protocols": 1}
 MAX_JOBS_KEPT = 500
 
 
@@ -190,7 +190,7 @@ class JobManager:
         soil_block: dict[str, Any] | None = None
         if soil_id and soil_bytes is not None:
             self._begin(job, "reading_soil", planned)
-            soil_block = self._read_soil(soil_bytes, soil_mime)
+            soil_block = self._read_soil(soil_id, soil_bytes, soil_mime)
             job.parts["soil"] = "failed" if soil_block["error"] else "ok"
             self._end(job, "reading_soil")
 
@@ -248,19 +248,34 @@ class JobManager:
 
     # ------------------------------------------------------------ steps
 
-    def _read_soil(self, data: bytes, mime: str) -> dict[str, Any]:
+    def _read_soil(self, upload_id: str, data: bytes, mime: str) -> dict[str, Any]:
+        empty = {"readings": {}, "labName": None, "sampleDate": None, "engine": None, "pages": 0}
         try:
             result = self._soil.read(data, mime)
         except MlError as exc:
-            return {"readings": {}, "labName": None, "sampleDate": None, "error": _err(exc.code, exc.message, exc.retryable)}
+            return {**empty, "error": _err(exc.code, exc.message, exc.retryable)}
         except Exception:
             log.exception("Soil reader crashed")
-            return {"readings": {}, "labName": None, "sampleDate": None, "error": _err("UNREADABLE_SOIL_CARD", "Soil card could not be read")}
+            return {**empty, "error": _err("UNREADABLE_SOIL_CARD", "Soil card could not be read")}
+        if result.view_image:  # the upright page the highlight boxes refer to
+            self._uploads.write_derived(upload_id, "card.jpg", result.view_image)
         readings = {
-            r.key: {"value": r.value, "confidence": r.confidence, "region": list(r.region) if r.region else None}
+            r.key: {
+                "value": r.value,
+                "confidence": r.confidence,
+                "region": list(r.region) if r.region else None,
+                "reason": r.reason,
+            }
             for r in result.readings
         }
-        return {"readings": readings, "labName": result.lab_name, "sampleDate": result.sample_date, "error": None}
+        return {
+            "readings": readings,
+            "labName": result.lab_name,
+            "sampleDate": result.sample_date,
+            "engine": result.engine,
+            "pages": result.pages,
+            "error": None,
+        }
 
     def _classify(self, image: Image.Image, analysis_id: str, inp: dict[str, Any]):
         try:

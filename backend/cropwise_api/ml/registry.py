@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Callable
 
 from ..config import REPO_ROOT, Settings
 from .base import LeafClassifier, MlError, SoilCardReader
 from .soil_reader import UnavailableSoilReader
+
+log = logging.getLogger("cropwise.ml")
 
 
 def _build_cnn(settings: Settings) -> LeafClassifier:
@@ -36,5 +39,16 @@ def build_leaf_classifier(settings: Settings) -> LeafClassifier:
     return factory(settings)
 
 
-def build_soil_reader(settings: Settings) -> SoilCardReader:  # noqa: ARG001 - settings reserved for the OCR engine
-    return UnavailableSoilReader()
+def build_soil_reader(settings: Settings) -> SoilCardReader:
+    """Local OCR when its packages are installed; otherwise cards are stored and values typed by hand."""
+    if settings.soil_reader == "unavailable":
+        return UnavailableSoilReader("turned off with CROPWISE_SOIL_READER=unavailable")
+    if settings.soil_reader != "rapidocr":
+        raise MlError("SERVER", f"Unknown soil reader '{settings.soil_reader}'. Choose rapidocr or unavailable")
+    try:
+        from .soil import LocalSoilCardReader
+
+        return LocalSoilCardReader(settings)
+    except ImportError as exc:
+        log.warning("Soil card OCR not available: %s", exc)
+        return UnavailableSoilReader(str(exc))

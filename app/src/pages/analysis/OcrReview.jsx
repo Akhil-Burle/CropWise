@@ -33,7 +33,8 @@ export default function OcrReview() {
   const [inputs, setInputs] = useState({});
   const [activeKey, setActiveKey] = useState(null);
   const [manual, setManual] = useState(false);
-  const [missing, setMissing] = useState([]);
+  const [invalid, setInvalid] = useState([]);
+  const [needOne, setNeedOne] = useState(false);
 
   const analysis = q.data;
   const soil = analysis?.soil;
@@ -52,12 +53,14 @@ export default function OcrReview() {
   const nextPath = (analysis?.diagnosis || analysis?.diagnosisError) && !skipDiagnosis ? 'diagnosis' : 'advisory';
 
   const onConfirm = async () => {
-    const keys = NUTRIENT_KEYS;
-    const empty = keys.filter((k) => (inputs[k] ?? '').trim() === '' || Number.isNaN(Number(inputs[k])));
-    setMissing(empty);
-    if (empty.length) return;
+    // A box left empty means "this is not on my report"; only what is typed is sent.
+    const entered = NUTRIENT_KEYS.filter((k) => (inputs[k] ?? '').trim() !== '');
+    const bad = entered.filter((k) => Number.isNaN(Number(inputs[k])));
+    setInvalid(bad);
+    setNeedOne(entered.length === 0);
+    if (bad.length || entered.length === 0) return;
     try {
-      await confirm.run(keys.map((k) => ({ key: k, value: Number(inputs[k]) })));
+      await confirm.run(entered.map((k) => ({ key: k, value: Number(inputs[k]) })));
       advanceDemo('ocr_review');
       navigate(`/app/analysis/${id}/${nextPath}`);
     } catch {
@@ -136,7 +139,8 @@ export default function OcrReview() {
               {rows.map((v) => {
                 const raw = inputs[v.key] ?? '';
                 const edited = soil ? raw !== original[v.key] : false;
-                const err = fieldErrors[v.key] ? t('ocr.rangeError') : missing.includes(v.key) ? t('wizard.required') : null;
+                const err = fieldErrors[v.key] ? t('ocr.rangeError') : invalid.includes(v.key) ? t('ocr.notANumber') : null;
+                const reason = soil && !edited && v.reviewReason ? t(`ocr.reason.${v.reviewReason}`) : null;
                 return (
                   <li
                     key={v.key}
@@ -175,7 +179,9 @@ export default function OcrReview() {
                         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-ink-muted">{v.unit}</span>
                       </div>
                       <div className="min-w-0 flex-1 text-sm">
-                        {edited || !soil ? (
+                        {raw.trim() === '' ? (
+                          <span className="text-ink-muted">{t('ocr.leaveBlank')}</span>
+                        ) : edited || !soil ? (
                           <span className="text-ink-muted">{t('ocr.recheck')}</span>
                         ) : (
                           <StatusChip status={v.status} statusLabel={v.statusLabel} size="sm" />
@@ -183,12 +189,13 @@ export default function OcrReview() {
                       </div>
                     </div>
                     <p id={`soil-hint-${v.key}`} className={cx('mt-1.5 text-xs', err ? 'font-medium text-danger' : 'text-ink-muted')}>
-                      {err ?? (v.range.low !== null || v.range.high !== null ? `${t('soil.normal')}: ${rangeText(t, v.range, v.unit, lang)}` : t('ocr.enterFromCard'))}
+                      {err ?? reason ?? (v.range.low !== null || v.range.high !== null ? `${t('soil.normal')}: ${rangeText(t, v.range, v.unit, lang)}` : t('ocr.enterFromCard'))}
                     </p>
                   </li>
                 );
               })}
             </ul>
+            {needOne ? <p className="mt-3 text-sm font-medium text-danger" role="alert">{t('ocr.needOne')}</p> : null}
             {confirm.error && !confirm.error.fieldErrors ? <p className="mt-3 text-sm font-medium text-danger" role="alert">{toMessage(confirm.error)?.title}</p> : null}
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
               {soil ? (

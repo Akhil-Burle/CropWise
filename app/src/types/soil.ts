@@ -29,6 +29,8 @@ export interface SoilValue {
   /** OCR confidence 0–1, null for manual/lab entries. */
   confidence: number | null;
   needsReview: boolean;
+  /** Why the farmer should check this field (not_found, unreadable, unit_converted, ...), else null. */
+  reviewReason: string | null;
   region: BoundingBox | null;
 }
 
