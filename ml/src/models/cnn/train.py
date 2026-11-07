@@ -63,6 +63,10 @@ def parse_args():
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", choices=["auto", "cpu", "cuda", "xpu"], default="auto")
+    parser.add_argument("--amp", choices=["off", "bf16"], default="off",
+                    help="bf16 autocast on xpu/cuda (recommended on Intel Arc)")
+    parser.add_argument("--channels-last", action="store_true",
+                    help="Use channels_last memory format (usually faster on GPU)")
     parser.add_argument("--no-pretrained", action="store_true", help="Do not download ImageNet weights")
     parser.add_argument("--force-extract", action="store_true", help="Replace the extracted release directory")
     args = parser.parse_args()
@@ -230,6 +234,7 @@ def loaders(data_dir: Path, image_size: int, batch_size: int, workers: int, devi
     kwargs = {"batch_size": batch_size, "num_workers": workers, "pin_memory": device.type == "cuda"}
     if workers:
         kwargs["persistent_workers"] = True
+        kwargs["prefetch_factor"] = 4
     result = {
         split: DataLoader(dataset, shuffle=(split == "train"), **kwargs)
         for split, dataset in datasets.items()
@@ -237,8 +242,15 @@ def loaders(data_dir: Path, image_size: int, batch_size: int, workers: int, devi
     class_to_idx = datasets["train"].class_to_idx
     return result, class_to_idx
 
+def make_amp_context(device, amp):
+    if amp == "bf16" and device.type in ("xpu", "cuda"):
+        return torch.autocast(device_type=device.type, dtype=torch.bfloat16)
+    if device.type == "cuda":
+        return torch.autocast(device_type="cuda", dtype=torch.float16)
+    return nullcontext()
 
-def run_epoch(model, loader, loss_fn, device, optimizer=None, scaler=None):
+
+def run_epoch(model, loader, loss_fn, device, optimizer=None, scaler=None, amp="off", channels_last=False):
     training = optimizer is not None
     model.train(training)
     total_loss = 0.0
@@ -248,13 +260,14 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None, scaler=None):
         for step, (images, labels) in enumerate(loader, start=1):
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
+            if channels_last:
+                images = images.contiguous(memory_format=torch.channels_last)
+            labels = labels.to(device, non_blocking=True)
             if training:
                 optimizer.zero_grad(set_to_none=True)
-            amp_context = (torch.autocast(device_type="cuda", dtype=torch.float16)
-                           if device.type == "cuda" else nullcontext())
-            with amp_context:
+            with make_amp_context(device, amp):
                 logits = model(images)
-                loss = loss_fn(logits, labels)
+                loss = loss_fn(logits, labels)            
             if training:
                 if scaler is not None:
                     scaler.scale(loss).backward()
@@ -326,6 +339,8 @@ def main():
     in_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(in_features, len(class_to_idx))
     model = model.to(device)
+    if args.channels_last:
+        model = model.to(memory_format=torch.channels_last)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=2)
     # Keep Intel Arc on FP32 initially; GradScaler has hardware limitations on some Arc GPUs.
@@ -339,8 +354,10 @@ def main():
           f"classes={len(class_to_idx)} device={device}", flush=True)
     for epoch in range(1, args.epochs + 1):
         epoch_start = time.time()
-        train_metrics = run_epoch(model, loaders_by_split["train"], loss_fn, device, optimizer, scaler)
-        val_metrics = run_epoch(model, loaders_by_split["validation"], loss_fn, device)
+        train_metrics = run_epoch(model, loaders_by_split["train"], loss_fn, device, optimizer, scaler,
+                          args.amp, args.channels_last)        
+        val_metrics = run_epoch(model, loaders_by_split["validation"], loss_fn, device,
+                        amp=args.amp, channels_last=args.channels_last)        
         scheduler.step(val_metrics["macro_f1"])
         row = {"epoch": epoch, "learning_rate": optimizer.param_groups[0]["lr"],
                "seconds": time.time() - epoch_start,
@@ -361,7 +378,8 @@ def main():
 
     checkpoint = torch.load(args.output_dir / "best.pt", map_location=device, weights_only=True)
     model.load_state_dict(checkpoint["state_dict"])
-    test_metrics = run_epoch(model, loaders_by_split["test"], loss_fn, device)
+    test_metrics = run_epoch(model, loaders_by_split["test"], loss_fn, device,
+                         amp=args.amp, channels_last=args.channels_last)    
     class_names = [name for name, _ in sorted(class_to_idx.items(), key=lambda item: item[1])]
     precision, recall, f1, support = precision_recall_fscore_support(
         test_metrics["y_true"], test_metrics["y_pred"], labels=list(range(len(class_names))), zero_division=0)
