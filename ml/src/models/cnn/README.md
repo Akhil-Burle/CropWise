@@ -103,6 +103,16 @@ Git. No model results are recorded until an actual training run completes. Test 
 not a substitute for a separately collected field test. Publisher labels are experimental and are
 not independently verified diagnoses.
 
+To identify underrepresented/weak classes and find misclassified validation examples for manual
+dataset review, run:
+
+```bash
+python ml/src/data/review_dataset.py
+```
+
+This evaluates the saved best checkpoint on validation data and writes `class_review.csv` and
+`misclassified_validation.csv` beside the checkpoint. It never deletes or relabels images.
+
 Before publishing dataset shards in a GitHub Release, review the source-specific license and
 attribution requirements recorded in the dataset report and bundle metadata. The combined bundle
 does not have one blanket license.

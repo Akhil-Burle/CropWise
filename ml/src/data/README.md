@@ -1,4 +1,4 @@
-# Shared data pipeline — planned
+# Shared data pipeline
 
 Executable tools:
 
@@ -11,7 +11,15 @@ Executable tools:
 - `dataset.py`: PIL-based dataset usable by both models, with optional model-specific transforms.
 - `export.py`: standalone ImageFolder/CSV bundle with actual image bytes and checksum.
 - `report.py`: frozen dataset configuration, admission catalog and college review report.
+- `review_dataset.py`: evaluates a saved CNN checkpoint on validation data and creates a class/image review queue; never deletes data.
 - `test_prepare.py`: regression tests for leakage, duplicate handling and conflicting labels.
 
 Use commands from `ml/data/README.md`. Both models must consume the same release and class map.
 Perceptual/capture grouping is a heuristic, not proof that every physical leaf has been identified.
+
+After CNN training, run `python ml/src/data/review_dataset.py` from the repository root. It writes
+`class_review.csv` and `misclassified_validation.csv` beside the saved checkpoint. The default flags
+highlight low training counts, small validation support and low validation F1. Use these reports to
+inspect the images and labels manually. Model mistakes are review candidates, not proof that a label
+is wrong; the script does not remove or edit images. It uses validation predictions and leaves the
+test split out of the review/tuning loop.

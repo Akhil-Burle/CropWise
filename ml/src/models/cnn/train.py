@@ -378,29 +378,21 @@ def main():
 
     checkpoint = torch.load(args.output_dir / "best.pt", map_location=device, weights_only=True)
     model.load_state_dict(checkpoint["state_dict"])
+    validation_metrics = run_epoch(model, loaders_by_split["validation"], loss_fn, device,
+                                   amp=args.amp, channels_last=args.channels_last)
     test_metrics = run_epoch(model, loaders_by_split["test"], loss_fn, device,
-                         amp=args.amp, channels_last=args.channels_last)    
+                             amp=args.amp, channels_last=args.channels_last)
     class_names = [name for name, _ in sorted(class_to_idx.items(), key=lambda item: item[1])]
-    precision, recall, f1, support = precision_recall_fscore_support(
-        test_metrics["y_true"], test_metrics["y_pred"], labels=list(range(len(class_names))), zero_division=0)
-    with (args.output_dir / "per_class_metrics.csv").open("w", newline="") as stream:
-        writer = csv.writer(stream)
-        writer.writerow(["class_id", "class_name", "precision", "recall", "f1", "support"])
-        writer.writerows((idx, class_names[idx], precision[idx], recall[idx], f1[idx], support[idx])
-                         for idx in range(len(class_names)))
+    write_class_metrics(args.output_dir / "per_class_metrics.csv", test_metrics, class_names)
+    write_class_metrics(args.output_dir / "validation_per_class_metrics.csv", validation_metrics, class_names)
     with (args.output_dir / "history.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=history[0].keys())
         writer.writeheader()
         writer.writerows(history)
-    test_rows = loaders_by_split["test"].dataset.rows
-    with (args.output_dir / "predictions.csv").open("w", newline="") as stream:
-        fields = ["image_id", "true_class_id", "true_class", "predicted_class_id", "predicted_class", "correct"]
-        writer = csv.DictWriter(stream, fieldnames=fields)
-        writer.writeheader()
-        for row, true_id, pred_id in zip(test_rows, test_metrics["y_true"], test_metrics["y_pred"]):
-            writer.writerow({"image_id": row["image_id"], "true_class_id": true_id,
-                             "true_class": class_names[true_id], "predicted_class_id": pred_id,
-                             "predicted_class": class_names[pred_id], "correct": true_id == pred_id})
+    write_predictions(args.output_dir / "predictions.csv", loaders_by_split["test"].dataset.rows,
+                      test_metrics, class_names)
+    write_predictions(args.output_dir / "validation_predictions.csv",
+                      loaders_by_split["validation"].dataset.rows, validation_metrics, class_names)
     metadata = {
         "model": "torchvision.efficientnet_b0", "pretrained": not args.no_pretrained,
         "weights": None if args.no_pretrained else "EfficientNet_B0_Weights.DEFAULT",
@@ -408,6 +400,7 @@ def main():
         "seed": args.seed, "epochs_completed": len(history), "best_epoch": checkpoint["epoch"],
         "batch_size": args.batch_size, "image_size": args.image_size,
         "learning_rate": args.learning_rate, "weight_decay": args.weight_decay,
+        "amp": args.amp, "channels_last": args.channels_last,
         "device": str(device), "torch_version": torch.__version__,
         "torchvision_version": __import__("torchvision").__version__,
         "class_to_idx": class_to_idx, "test_metrics": {k: v for k, v in test_metrics.items() if k not in ("y_true", "y_pred")},
@@ -429,6 +422,29 @@ def seed_everything(seed: int):
         torch.xpu.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+
+
+def write_class_metrics(path: Path, metrics: dict, class_names: list[str]):
+    precision, recall, f1, support = precision_recall_fscore_support(
+        metrics["y_true"], metrics["y_pred"], labels=list(range(len(class_names))), zero_division=0)
+    with path.open("w", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["class_id", "class_name", "precision", "recall", "f1", "support"])
+        writer.writerows((idx, class_names[idx], precision[idx], recall[idx], f1[idx], support[idx])
+                         for idx in range(len(class_names)))
+
+
+def write_predictions(path: Path, rows: list[dict], metrics: dict, class_names: list[str]):
+    fields = ["image_id", "relative_path", "true_class_id", "true_class",
+              "predicted_class_id", "predicted_class", "correct"]
+    with path.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for row, true_id, pred_id in zip(rows, metrics["y_true"], metrics["y_pred"]):
+            writer.writerow({"image_id": row["image_id"], "relative_path": row["relative_path"],
+                             "true_class_id": true_id, "true_class": class_names[true_id],
+                             "predicted_class_id": pred_id, "predicted_class": class_names[pred_id],
+                             "correct": true_id == pred_id})
 
 
 if __name__ == "__main__":
