@@ -1,0 +1,62 @@
+{
+  "status": "dataset_prepared_training_specification_not_executable",
+  "task": "crop_leaf_disease_classification",
+  "models": {
+    "cnn": {
+      "initial_candidate": "EfficientNet-B0",
+      "pretrained_weights": null
+    },
+    "vit": {
+      "initial_candidate": "ViT-B/16",
+      "pretrained_weights": null
+    }
+  },
+  "dataset": {
+    "name": "CropWise curated fruit and vegetable leaf corpus",
+    "label_map": "data/processed/releases/d053c9012200c857/class_to_idx.json",
+    "split_id": "d053c9012200c857",
+    "shared_manifests": true,
+    "target_ratios": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "group_related_images": true,
+    "deduplicate_before_split": true,
+    "field_test_manifest": null,
+    "manifest_paths": {
+      "train": "data/processed/releases/d053c9012200c857/train.csv",
+      "validation": "data/processed/releases/d053c9012200c857/validation.csv",
+      "test": "data/processed/releases/d053c9012200c857/test.csv"
+    },
+    "images": 65978,
+    "classes": 105,
+    "prepared_bundle": "data/processed/cropwise-d053c9012200c857.tar.gz"
+  },
+  "training": {
+    "strategy": "fine_tune_pretrained_models",
+    "suggested_seeds": [
+      42,
+      43,
+      44
+    ],
+    "selection_split": "validation",
+    "selection_metric": "macro_f1",
+    "hyperparameters": "record_per_model_before_training"
+  },
+  "evaluation": {
+    "primary_metric": "macro_f1",
+    "metrics": [
+      "accuracy",
+      "macro_precision",
+      "macro_recall",
+      "macro_f1"
+    ],
+    "per_class_metrics": true,
+    "confusion_matrices": true,
+    "matched_predictions": true,
+    "latency_batch_size": 1,
+    "latency_hardware": null,
+    "threshold_selection_split": "validation"
+  }
+}

@@ -13,6 +13,11 @@ service interfaces in `app/src/services/contracts.ts` to be served somehow. Sugg
 - **Advisory engine:** all maths server-side (dose per area, water, tank count, PHI, cost, ROI, SOC).
   Reference logic for every number lives in `app/src/mock/engine/` – port it, then delete `app/src/mock/`.
 - **Content:** advisories, disease names, guides stored per language (`contentLang` in every response).
+- **CNN and ViT:** both models are research deliverables evaluated against identical test images;
+  retain both results in `ml/results/`. Record the model/checkpoint and run ID behind each diagnosis.
+  The current frontend accepts one diagnosis per check. A dual-model comparison screen would need
+  API/schema/UI changes; this documentation update does not implement it. An ensemble is outside
+  the initial scope. See `ml/README.md` for the shared evaluation protocol.
 - **Expert:** farmer detail, review queue (low confidence / unconfirmed soil / partial), send advice.
 - **Translations:** run `tools/i18n/translate.mjs` against stored content too, and keep a human-reviewed
   flag for safety text.

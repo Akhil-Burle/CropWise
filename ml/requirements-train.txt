@@ -1,0 +1,5 @@
+# Install PyTorch and torchvision from https://pytorch.org/get-started/locally/
+# first, selecting the machine's CPU/CUDA/ROCm build.
+scikit-learn>=1.5,<2
+Pillow>=10,<14
+requests>=2.32,<3

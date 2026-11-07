@@ -1,0 +1,82 @@
+{
+  "status": "selected_for_download_not_automatic_training_admission",
+  "files": [
+    {
+      "source": "plantvillage",
+      "file_id": "data.zip"
+    },
+    {
+      "source": "plantvillage",
+      "file_id": "README.md"
+    },
+    {
+      "source": "plantvillage",
+      "file_id": "leaf_grouping/leaf-map.json"
+    },
+    {
+      "source": "plantvillage",
+      "file_id": "splits/color_train.txt"
+    },
+    {
+      "source": "plantvillage",
+      "file_id": "splits/color_test.txt"
+    },
+    {
+      "source": "krishna_chilli_v3",
+      "file_id": "ca92fa24-b913-420c-b652-a40f7ba6fdda",
+      "filename": "Chili Leaf Disease Original Dataset.zip"
+    },
+    {
+      "source": "vegetables_seven_v1",
+      "file_id": "ffa4a50a-7174-4867-a372-a841dedb5767",
+      "filename": "Resize plant_leaves dataset(1545).zip"
+    },
+    {
+      "source": "banana_lsd_v1",
+      "file_id": "__all__"
+    },
+    {
+      "source": "citrus_v2",
+      "file_id": "53398b67-6f0e-4a67-8384-e2b574b2ebf4",
+      "filename": "Citrus.zip"
+    },
+    {
+      "source": "lemon_v6",
+      "file_id": "7cf6f28b-637c-4db4-9086-5b297d8a2f55",
+      "filename": "Root.zip"
+    },
+    {
+      "source": "mango_leaf_bd_v1",
+      "file_id": "__all__"
+    },
+    {
+      "source": "papaya_leaf_v2",
+      "file_id": "85ec41c0-aac1-4c5a-a398-ea0e5917c19d",
+      "filename": "BDPapayaLeaf.zip"
+    },
+    {
+      "source": "guava_v1",
+      "file_id": "9fe105b6-53c8-4fe8-bc57-08d4267b8d94",
+      "filename": "Original_Data.zip"
+    },
+    {
+      "source": "malabar_spinach",
+      "file_id": "2ecbac6d-1a4e-48df-940a-3a4c8ed36cdf",
+      "filename": "Malabar_Dataset_Original_Data.zip"
+    },
+    {
+      "source": "vegetables_bd_v3",
+      "file_id": "__all__"
+    },
+    {
+      "source": "gourds_okra_v2",
+      "file_id": "8675115d-b26c-407f-b405-7cc777c1f922",
+      "filename": "Dataset.zip"
+    },
+    {
+      "source": "watermelon_v1",
+      "file_id": "e4c6ece8-dab4-49c5-b277-c393bf1eb0eb",
+      "filename": "Original Image.zip"
+    }
+  ]
+}

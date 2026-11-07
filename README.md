@@ -1,6 +1,19 @@
 # CropWise – Pesticide Usage Advisory & Organic Farming Awareness System
 
 Frontend prototype for a VTU community/societal project (RV Institute of Technology and Management).
+The planned ML study will train and evaluate **both a CNN and a Vision Transformer (ViT)** on the
+same held-out images, retaining both models' results for college review. No winner is assumed.
+See the [project synopsis](docs/SYNOPSIS.md) and [ML experiment plan](ml/README.md).
+The initial EfficientNet-B0 CNN training script is implemented; training and measured model results are pending.
+For the expanded crop scope, see the [fruit and vegetable dataset plan](docs/FRUIT_VEGETABLE_DATASETS.md)
+and [source catalog](ml/data/dataset_catalog.csv), which distinguishes candidates from admitted data.
+The selected sources have now been downloaded and curated into shared CNN/ViT training partitions.
+See the [dataset preparation report](docs/DATASET_PREPARATION_REPORT.md) for the frozen release,
+actual counts, exclusions, validation and portable training bundle. From a clean clone, run
+`python ml/run_cnn.py` to install dependencies, download and prepare the pinned data, then start CNN
+training. See the
+[CNN training guide](ml/src/models/cnn/README.md) for the data bootstrap and training command. Model
+training remains pending.
 React 18 + Vite (JSX components, TypeScript services/types), Tailwind, React Router, Recharts (expert
 screens only), Zustand, Zod, react-i18next, Capacitor for Android. No animation library. Runs fully
 offline on mock data.
@@ -22,8 +35,13 @@ cropwise/
   tools/i18n/   full-sentence translation pipeline + glossary
   contracts/    openapi.json from FastAPI goes here
   backend/      FastAPI (planned) – see backend/README.md
-  ml/           CNN / ViT and soil-card OCR (planned) – see ml/README.md
-  docs/         design brief
+  ml/           paired CNN and ViT study + separate soil-card OCR (planned)
+    configs/    shared experiment specification
+    data/       local datasets and shared split manifests
+    src/        shared data/evaluation, separate models/cnn/, models/vit/ and ocr/
+    checkpoints/ local trained weights (not committed)
+    results/    comparison metrics, matched predictions and review figures
+  docs/         project synopsis and design brief
 ```
 
 ## Setup

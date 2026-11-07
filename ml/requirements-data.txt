@@ -1,0 +1,6 @@
+Pillow==13.0.0
+numpy==2.5.4
+ImageHash==4.3.2
+requests==2.34.2
+scipy==1.18.1
+rarfile==4.5

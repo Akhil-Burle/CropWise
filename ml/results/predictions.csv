@@ -1,0 +1,1 @@
+model_id,run_id,split_id,dataset_id,image_id,true_label,predicted_label,predicted_score,correct,rejected

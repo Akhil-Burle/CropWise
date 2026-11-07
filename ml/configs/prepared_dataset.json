@@ -1,0 +1,148 @@
+{
+  "status": "prepared_for_experimental_training_models_not_trained",
+  "python_version": "3.13.15",
+  "release_id": "d053c9012200c857",
+  "images": 65978,
+  "classes": 105,
+  "crop_ids": [
+    "apple",
+    "banana",
+    "bell_pepper",
+    "bitter_gourd",
+    "bottle_gourd",
+    "cauliflower",
+    "cherry",
+    "chilli",
+    "cucumber",
+    "eggplant",
+    "grape",
+    "guava",
+    "lemon",
+    "malabar_spinach",
+    "okra",
+    "papaya",
+    "peach",
+    "potato",
+    "pumpkin",
+    "ridge_gourd",
+    "snake_gourd",
+    "strawberry",
+    "tomato",
+    "watermelon",
+    "yardlong_bean"
+  ],
+  "splits": {
+    "validation": 9083,
+    "test": 11616,
+    "train": 45279
+  },
+  "downloaded_sources": 13,
+  "archive_bytes": 8473512370,
+  "bundle_path": "data/processed/cropwise-d053c9012200c857.tar.gz",
+  "bundle_bytes": 5517452986,
+  "bundle_sha256": "9d5d535aa6482c7c3522dc7bc77f0ea885429244da261a959fa75ace73d7a106",
+  "manifest_paths": {
+    "train": "data/processed/releases/d053c9012200c857/train.csv",
+    "validation": "data/processed/releases/d053c9012200c857/validation.csv",
+    "test": "data/processed/releases/d053c9012200c857/test.csv"
+  },
+  "manifest_sha256": {
+    "train": "2787aa5ae79003ec5b6d58d36d041dc9b9c669ac684d03605beaa7936e8da81b",
+    "validation": "5a1f6f388a2ee9376d3a138fb3dc04d219b0da8ac34da8e8c5c38d8756a2e70c",
+    "test": "b430f95644bbf9e8e5cd28f2e8336298f43c8241cc26da30c891ab0b829f0d16"
+  },
+  "class_map": "data/processed/releases/d053c9012200c857/class_to_idx.json",
+  "source_downloads": {
+    "krishna_chilli_v3": [
+      {
+        "sha256": "ccb3e216b58d68c4a365c37863104f5ffd41b12ec8766d9bff5f669cf6cd7c0f",
+        "bytes": 525828851,
+        "url": "https://data.mendeley.com/public-files/datasets/ymt8k9bjkn/files/ca92fa24-b913-420c-b652-a40f7ba6fdda/file_downloaded"
+      }
+    ],
+    "gourds_okra_v2": [
+      {
+        "sha256": "ed45f1f3ec3cf2fa083b026ddce6d8666d9575d204f19ca6b92ebad3e4f5ffc7",
+        "bytes": 1264600271,
+        "url": "https://data.mendeley.com/public-files/datasets/2svdj3yyrk/files/8675115d-b26c-407f-b405-7cc777c1f922/file_downloaded"
+      }
+    ],
+    "vegetables_seven_v1": [
+      {
+        "sha256": "904ca6c1f49dbb3833f62bc29ce5e39147e9e465e2a563b371dcb015336b48e8",
+        "bytes": 9914690,
+        "url": "https://data.mendeley.com/public-files/datasets/hgshn2zg3t/files/ffa4a50a-7174-4867-a372-a841dedb5767/file_downloaded"
+      }
+    ],
+    "banana_lsd_v1": [
+      {
+        "sha256": "420523152c2b65c3f116c072cf95017733e9b8cd0cd01b7f667c588ca81dc85d",
+        "bytes": 54468587,
+        "url": "https://data.mendeley.com/public-api/zip/9tb7k297ff/download/1"
+      }
+    ],
+    "mango_leaf_bd_v1": [
+      {
+        "sha256": "0f4261883498c7383b84d259cbcd0b802d4a777fdcae42103041c1ed71311283",
+        "bytes": 108424956,
+        "url": "https://data.mendeley.com/public-api/zip/hxsnvwty3r/download/1"
+      }
+    ],
+    "papaya_leaf_v2": [
+      {
+        "sha256": "58ac1d49f4666f100395b79e3dcab15ee07d52f86b3fe35c3e6ebe482516bb75",
+        "bytes": 240682844,
+        "url": "https://data.mendeley.com/public-files/datasets/p997fvf526/files/85ec41c0-aac1-4c5a-a398-ea0e5917c19d/file_downloaded"
+      }
+    ],
+    "guava_v1": [
+      {
+        "sha256": "8f6769ee9de62316208106405a9c6799f29bcd3c768306df09a427c03e0ff3e2",
+        "bytes": 271055880,
+        "url": "https://data.mendeley.com/public-files/datasets/77vyz8d9v3/files/9fe105b6-53c8-4fe8-bc57-08d4267b8d94/file_downloaded"
+      }
+    ],
+    "citrus_v2": [
+      {
+        "sha256": "9786d349b136a6e45359e64ababc857496d5909b313811707e0cb28a951977c7",
+        "bytes": 66977095,
+        "url": "https://data.mendeley.com/public-files/datasets/3f83gxmv57/files/53398b67-6f0e-4a67-8384-e2b574b2ebf4/file_downloaded"
+      }
+    ],
+    "lemon_v6": [
+      {
+        "sha256": "cca0b1e270bb19f00dc23d7afb8ef1f0d96a34c75a29bce4e0460a5d624756f5",
+        "bytes": 96235801,
+        "url": "https://data.mendeley.com/public-files/datasets/643f5bbc2t/files/7cf6f28b-637c-4db4-9086-5b297d8a2f55/file_downloaded"
+      }
+    ],
+    "watermelon_v1": [
+      {
+        "sha256": "1a97a1571af728e9df1b280067d8adff6709b7997ea012f5cb63d4761e2c3fed",
+        "bytes": 2383093085,
+        "url": "https://data.mendeley.com/public-files/datasets/ntzym554jp/files/e4c6ece8-dab4-49c5-b277-c393bf1eb0eb/file_downloaded"
+      }
+    ],
+    "malabar_spinach": [
+      {
+        "sha256": "c320068621eb25c8e828638aab70c584b5c8e1151d13ad9299efb202227631ad",
+        "bytes": 324105407,
+        "url": "https://data.mendeley.com/public-files/datasets/sy69db2nz5/files/2ecbac6d-1a4e-48df-940a-3a4c8ed36cdf/file_downloaded"
+      }
+    ],
+    "vegetables_bd_v3": [
+      {
+        "sha256": "13071443caac634f7381aba3666a09631b7cd3037907359137d69cc00eb112ca",
+        "bytes": 943401462,
+        "url": "https://data.mendeley.com/public-api/zip/n67gctmjyj/download/3"
+      }
+    ],
+    "plantvillage": [
+      {
+        "sha256": "fba30c6a7965e49be94b47a62f8aff6cfb1c35c27f475f22092b56db41745e84",
+        "bytes": 2184723441,
+        "url": "https://huggingface.co/datasets/mohanty/PlantVillage/resolve/9e97599868962bd0079b8db4b7f1efa9185fa1e7/data.zip"
+      }
+    ]
+  }
+}
