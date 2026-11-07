@@ -14,6 +14,7 @@ import json
 from pathlib import Path, PurePosixPath
 import random
 import shutil
+import sys
 import tarfile
 import time
 
@@ -26,6 +27,10 @@ from torchvision import models, transforms
 
 
 ML = Path(__file__).resolve().parents[3]
+if str(ML) not in sys.path:
+    sys.path.insert(0, str(ML))
+from src.data.dataset import CropWiseDataset
+
 DEFAULT_RELEASE = "d053c9012200c857"
 DEFAULT_SHA256 = "9d5d535aa6482c7c3522dc7bc77f0ea885429244da261a959fa75ace73d7a106"
 DEFAULT_BYTES = 5517452986
@@ -205,11 +210,6 @@ def is_prepared_bundle(path: Path) -> bool:
 
 
 def loaders(data_dir: Path, image_size: int, batch_size: int, workers: int, device):
-    from importlib.util import spec_from_file_location, module_from_spec
-    loader_path = ML / "src" / "data" / "dataset.py"
-    spec = spec_from_file_location("cropwise_dataset", loader_path)
-    module = module_from_spec(spec)
-    spec.loader.exec_module(module)
     normalization = transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(image_size, scale=(0.75, 1.0)),
@@ -223,7 +223,7 @@ def loaders(data_dir: Path, image_size: int, batch_size: int, workers: int, devi
         transforms.ToTensor(), normalization,
     ])
     datasets = {
-        split: module.CropWiseDataset(data_dir / f"{split}.csv", transform=transform)
+        split: CropWiseDataset(data_dir / f"{split}.csv", transform=transform)
         for split, transform in (("train", train_transform), ("validation", eval_transform), ("test", eval_transform))
     }
     kwargs = {"batch_size": batch_size, "num_workers": workers, "pin_memory": device.type == "cuda"}

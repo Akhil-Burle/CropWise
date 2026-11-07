@@ -27,6 +27,10 @@ Use `python ml/run_cnn.py -- --epochs 3 --batch-size 8` to pass training options
 without repeating environment or dataset setup, use `--skip-install --skip-data-setup` with an
 existing `ml/.venv` and validated local release.
 
+If an older checkout reports `ModuleNotFoundError` for the dataset module while starting DataLoader
+workers, pull the latest `main` and rerun. As a temporary workaround, set workers to zero:
+`python ml/run_cnn.py -- --num-workers 0`.
+
 ## Dataset distribution
 
 The prepared 5.5 GB archive is not committed to Git. The fresh-clone runner above obtains the same
